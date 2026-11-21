@@ -1,0 +1,94 @@
+@import "tailwindcss";
+
+/* Varianta 1: Plum, Flamingo Pink, Electric Blue */
+/*
+@theme {
+  --color-background: #170d1d;
+  --color-surface: #24152d;
+  --color-border: #4a3554;
+  --color-text: #f8edf5;
+  --color-muted: #c9b9d1;
+  --color-primary: #ff82aa;
+  --color-primary-hover: #ffc2d8;
+  --color-accent: #5b8dff;
+ 
+  --color-danger: #ff6b8a;
+}
+*/
+
+/*
+
+/* Varianta 2: Midnight Burgundy, Powder White, Amber Yellow */
+/*
+
+@theme {
+  --color-background: #260812;
+  --color-surface: #490d20;
+  --color-border: #79364a;
+  --color-text: #fffaf5;
+  --color-muted: #e2d3d1;
+  --color-primary: #ffc400;
+  --color-primary-hover: #ffda55;
+  --color-accent: #f5eee9;
+  --color-danger: #ff7185;
+}
+*/
+
+
+
+/* Varianta 4: Obsidian Black, Ice Grey, Racing Red */
+/*
+@theme {
+  --color-background: #111217;
+  --color-surface: #1b1d24;
+  --color-border: #3b3e48;
+  --color-text: #f5e5eb;
+  --color-muted: #c5c0c5;
+  --color-primary: #ef233c;
+  --color-primary-hover: #ff4b60;
+  --color-accent: #f5e5eb;
+  --color-danger: #ef233c;
+}
+*/
+
+/*Varianta 5: Deep Charcoal, Electric Violet, Acid Lime*/
+
+/*
+@theme {
+  --color-background: #18181c;
+  --color-surface: #222228;
+  --color-border: #3b3945;
+  --color-text: #f5f3f8;
+  --color-muted: #c4bfcc;
+  --color-primary: #723bfa;
+  --color-primary-hover: #8d63ff;
+  --color-accent: #b6f500;
+  --color-danger: #ff647c;
+}
+*/
+
+
+
+@theme {
+  --color-background: #08070d;
+  --color-surface: #15121d;
+  --color-border: #393044;
+  --color-text: #f8f5ff;
+  --color-muted: #c9c1d8;
+  --color-primary: #ff8a2b;
+  --color-primary-hover: #ffad63;
+  --color-accent: #7827ff;
+  --color-danger: #ff7185;
+}
+
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}

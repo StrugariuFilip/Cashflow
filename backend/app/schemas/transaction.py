@@ -2,7 +2,7 @@ from datetime import date
 from decimal import Decimal
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class TransactionCreate(BaseModel):
@@ -36,3 +36,19 @@ class TransactionUpdate(BaseModel):
     category: str | None = Field(default=None, min_length=1, max_length=50)
     description: str | None = Field(default=None, max_length=500)
     transaction_date: date | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def validate_patch_fields(cls, value):
+        if not isinstance(value, dict):
+            return value
+
+        if not value:
+            raise ValueError("Trimite cel puțin un câmp pentru actualizare.")
+
+        required_fields = ("type", "amount", "category", "transaction_date")
+        for field in required_fields:
+            if field in value and value[field] is None:
+                raise ValueError(f"Câmpul '{field}' nu poate fi null.")
+
+        return value

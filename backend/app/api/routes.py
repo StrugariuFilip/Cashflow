@@ -1,7 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
+from decimal import Decimal
 
+from sqlalchemy import case, func
+
+from app.schemas.dashboard import DashboardSummary
 from app.core.dependencies import get_current_user, get_db
 from app.models.transaction import Transaction
 from app.models.user import User
@@ -33,7 +37,7 @@ def list_transactions(
     return (
         db.query(Transaction)
         .filter(Transaction.user_id == current_user.id)
-        .order_by(Transaction.id)
+        .order_by(Transaction.transaction_date, Transaction.id)
         .all()
     )
 
@@ -179,3 +183,35 @@ def patch_transaction(
     commit_or_raise(db)
     db.refresh(transaction)
     return transaction
+
+@router.get("/dashboard/summary", response_model=DashboardSummary)
+def get_dashboard_summary(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    total_income = (
+        db.query(func.coalesce(func.sum(Transaction.amount), 0))
+        .filter(
+            Transaction.user_id == current_user.id,
+            Transaction.type == "income",
+        )
+        .scalar()
+    )
+
+    total_expenses = (
+        db.query(func.coalesce(func.sum(Transaction.amount), 0))
+        .filter(
+            Transaction.user_id == current_user.id,
+            Transaction.type == "expense",
+        )
+        .scalar()
+    )
+
+    total_income = Decimal(str(total_income))
+    total_expenses = Decimal(str(total_expenses))
+
+    return DashboardSummary(
+        total_income=total_income,
+        total_expenses=total_expenses,
+        balance=total_income - total_expenses,
+    )

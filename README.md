@@ -1,15 +1,16 @@
 # CashFlow
 
-CashFlow este o aplicație web full-stack pentru gestionarea finanțelor personale. 
+CashFlow este o aplicație web full-stack pentru gestionarea finanțelor personale. Utilizatorii se pot autentifica, își pot gestiona tranzacțiile și pot vedea rapoarte despre venituri și cheltuieli.
 
 ## Tehnologii
 
 - **Backend:** Python, FastAPI și Uvicorn
-- **Persistență pregătită:** SQLAlchemy 2.0 și PostgreSQL prin `psycopg`
-- **Frontend planificat:** React, TypeScript, Vite, Tailwind CSS și shadcn/ui
-- **Documentație:** Markdown în [`docs/`](./docs/)
+- **Bază de date:** PostgreSQL, SQLAlchemy 2.0 și psycopg
+- **Frontend:** React, TypeScript, Vite și Tailwind CSS
+- **Interfață și notificări:** React Router și Sonner
+- **Documentație:** Markdown în `docs/`
 
-## Structura actuală
+## Structura proiectului
 
 ```text
 Cashflow/
@@ -26,12 +27,35 @@ Cashflow/
 │   │   │   └── user.py
 │   │   ├── schemas/
 │   │   │   ├── auth.py
+│   │   │   ├── dashboard.py
 │   │   │   ├── transaction.py
 │   │   │   └── user.py
 │   │   ├── database.py
 │   │   └── main.py
 │   ├── .env
 │   └── requirements.txt
+├── frontend/
+│   ├── public/
+│   ├── src/
+│   │   ├── assets/
+│   │   ├── components/
+│   │   │   ├── PageLayout.tsx
+│   │   │   └── SessionExpirationWatcher.tsx
+│   │   ├── lib/
+│   │   │   ├── api.ts
+│   │   │   └── auth.ts
+│   │   ├── pages/
+│   │   │   ├── DashboardPage.tsx
+│   │   │   ├── LoginPage.tsx
+│   │   │   └── TransactionsPage.tsx
+│   │   ├── types/
+│   │   │   └── transaction.ts
+│   │   ├── App.tsx
+│   │   ├── index.css
+│   │   └── main.tsx
+│   ├── index.html
+│   ├── package.json
+│   └── vite.config.ts
 ├── docs/
 │   ├── architecture.md
 │   ├── README.md
@@ -40,24 +64,64 @@ Cashflow/
 └── README.md
 ```
 
+## Funcționalități
+
+- Înregistrare și autentificare cu parolă hash-uită și token JWT
+- Crearea, afișarea, editarea și ștergerea tranzacțiilor utilizatorului autentificat
+- Dashboard cu totaluri, comparație lunară și cheltuieli pe categorii
+- Expirarea automată a sesiunii când expiră tokenul
+
 ## Instalare și pornire
 
-Din directorul repository-ului:
+### Backend
+
+Din directorul repository-ului, se instalează dependențele:
 
 ```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -r backend\requirements.txt
-Copy-Item .env.example .env
-uvicorn backend.app.main:app --reload
+py -3.15 -m pip install -r backend\requirements.txt
 ```
 
-API-ul este disponibil la `http://127.0.0.1:8000`, iar documentația interactivă la `http://127.0.0.1:8000/docs`.
+Se configurează `backend/.env` cu `DATABASE_URL` și `JWT_SECRET`, apoi se pornește serverul:
 
-Verificarea de sănătate:
+```powershell
+py -3.15 -m uvicorn app.main:app --app-dir backend --reload
+```
+
+API-ul rulează la `http://127.0.0.1:8000`, iar documentația interactivă este la `http://127.0.0.1:8000/docs`.
+
+### Frontend
+
+```powershell
+cd frontend
+npm.cmd install
+npm.cmd run dev
+```
+
+Frontend-ul rulează la adresa afișată în terminal, de obicei `http://localhost:5173`.
+
+
+## API
+
+| Metodă | Rută | Descriere |
+|---|---|---|
+| `GET` | `/health` | Verifică API-ul și conexiunea la baza de date |
+| `POST` | `/api/v1/auth/register` | Creează un cont |
+| `POST` | `/api/v1/auth/login` | Autentifică utilizatorul și returnează un token |
+| `GET` | `/api/v1/dashboard/summary` | Returnează sumarul financiar al utilizatorului |
+| `GET` | `/api/v1/transactions` | Listează tranzacțiile utilizatorului autentificat |
+| `POST` | `/api/v1/transactions` | Creează o tranzacție |
+| `GET` | `/api/v1/transactions/{transaction_id}` | Returnează o tranzacție |
+| `PUT` | `/api/v1/transactions/{transaction_id}` | Înlocuiește datele unei tranzacții |
+| `PATCH` | `/api/v1/transactions/{transaction_id}` | Actualizează parțial o tranzacție |
+| `DELETE` | `/api/v1/transactions/{transaction_id}` | Șterge o tranzacție |
+
+Rutele pentru dashboard și tranzacții necesită autentificare. Fiecare utilizator poate accesa doar propriile tranzacții.
+
+## Verificarea conexiunii
+
 
 ```powershell
 Invoke-RestMethod http://127.0.0.1:8000/health
 ```
 
-Răspunsul este `{"status":"ok"}` și nu necesită PostgreSQL.
+Când baza de date este disponibilă, răspunsul indică `status: ok` și `database: connected`. Dacă PostgreSQL nu este accesibil, endpoint-ul returnează eroare `503`.
