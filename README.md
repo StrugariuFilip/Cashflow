@@ -139,8 +139,6 @@ Cashflow/
 │   ├── architecture.md
 │   ├── requirements.md
 │   └── README.md
-├── scripts/
-│   └── setup-github-project.ps1     # optional GitHub roadmap setup
 ├── .gitignore
 └── README.md
 ```
