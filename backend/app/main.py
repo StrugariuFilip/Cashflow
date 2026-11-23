@@ -2,9 +2,6 @@ from fastapi import FastAPI, HTTPException
 from sqlalchemy import text
 from app.database import engine
 from app.api.routes import router
-from app.database import Base, engine
-from app.models.transaction import Transaction
-from app.models.user import User
 from app.api.auth import router as auth_router
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -18,7 +15,6 @@ app.add_middleware(
 )
 app.include_router(router, prefix="/api/v1")
 app.include_router(auth_router, prefix="/api/v1")
-Base.metadata.create_all(bind=engine)
 
 @app.get("/health")
 def health_check():
