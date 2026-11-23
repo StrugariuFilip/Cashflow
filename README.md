@@ -87,7 +87,7 @@ flowchart TD
 
     AC --> A
 
-    subgraph DB[(PostgreSQL)]
+    subgraph DB["PostgreSQL"]
         USERS[users]
         TX[transactions]
         TX -. "user_id" .-> USERS
