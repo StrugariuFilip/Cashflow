@@ -8,7 +8,7 @@ load_dotenv("backend/.env")
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
-    raise RuntimeError("DATABASE_URL lipsește din backend/.env")
+    raise RuntimeError("DATABASE_URL is missing from backend/.env")
 
 
 class Base(DeclarativeBase):

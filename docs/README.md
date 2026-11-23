@@ -1,7 +1,7 @@
-# Documentația CashFlow
+# CashFlow Documentation
 
-Documentația proiectului descrie arhitectura propusă, cerințele aplicației și delimitarea dintre ceea ce există în cod și ceea ce rămâne planificat.
+The project documentation describes the proposed architecture, application requirements, and the distinction between implemented features and planned work.
 
-- [Arhitectură](./architecture.md): structura repository-ului, domeniul inițial și starea implementării.
-- [Cerințe](./requirements.md): cerințele obligatorii ale aplicației și etapa curentă.
+- [Arhitecture](./architecture.md): repository structure, initial scope, and implementation status.
+- [Requirements](./requirements.md): mandatory application requirements and the current phase.
 

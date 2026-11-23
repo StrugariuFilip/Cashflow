@@ -1,6 +1,6 @@
-# Arhitectura CashFlow
+# CashFlow Architecture
 
-## Structura repository-ului
+## Repository Structure
 
 ```text
 Cashflow/
@@ -54,75 +54,73 @@ Cashflow/
 └── README.md
 ```
 
-Fișierul `backend/.env` conține setările locale pentru conexiunea la PostgreSQL și secretul JWT. Nu trebuie inclus în repository.
+The frontend, core backend features, and dashboard are under development. Alembic migrations and automated tests will be added later.
 
-Frontend-ul, funcționalitățile de bază ale backendului și dashboard-ul sunt începute. Migrațiile Alembic și testele automated vor fi adăugate ulterior.
+## Database Model
 
-## Modelul bazei de date
-
-Tabelul `users` stochează conturile utilizatorilor. Tabelul `transactions` stochează veniturile și cheltuielile. Un utilizator poate avea mai multe tranzacții, iar fiecare tranzacție aparține unui singur utilizator.
+The `users` table stores user accounts. The `transactions` table stores income and expenses. A user can have multiple transactions, and each transaction belongs to exactly one user.
 
 ```text
 users
-├── id             INTEGER, cheie primară
-├── email          VARCHAR(255), unic și obligatoriu
-└── password_hash  VARCHAR, hash-ul parolei
+├── id             INTEGER, primary key
+├── email          VARCHAR(255), unique and required
+└── password_hash  VARCHAR, hashed password
 
 transactions
-├── id               INTEGER, cheie primară
-├── user_id          INTEGER, cheie externă → users.id
-├── type             VARCHAR(10), income sau expense
-├── amount           NUMERIC(12, 2), sumă pozitivă
+├── id               INTEGER, primary key
+├── user_id          INTEGER, foreign key → users.id
+├── type             VARCHAR(10), income or expense
+├── amount           NUMERIC(12, 2), positive amount
 ├── category         VARCHAR(50)
-├── description      VARCHAR(500), opțională
+├── description      VARCHAR(500), optional
 └── transaction_date DATE
 ```
 
-Parolele sunt stocate ca hash, nu în clar. Relația dintre utilizatori și tranzacții este de tip unu-la-mai-mulți. Câmpurile pentru timestamp-uri nu sunt încă incluse în modelele curente.
+Passwords are stored as hashes, never as plain text. The relationship between users and transactions is one-to-many. Timestamp fields are not yet included in the current models.
 
-## Organizarea aplicației
+## Application Structure
 
 ### Backend
 
-- `api/` conține endpoint-urile HTTP pentru autentificare și funcționalitățile aplicației.
-- `core/` conține dependențele comune, verificarea utilizatorului curent și funcțiile de securitate.
-- `models/` definește tabelele SQLAlchemy.
-- `schemas/` definește validarea datelor de intrare și formatele răspunsurilor API cu Pydantic.
-- `database.py` configurează conexiunea la PostgreSQL și sesiunile bazei de date.
-- `main.py` creează aplicația FastAPI, înregistrează routerele și definește verificarea de sănătate.
+- `api/` contains the HTTP endpoints for authentication and application features.
+- `core/` contains shared dependencies, current-user verification, and security functions.
+- `models/` defines the SQLAlchemy tables.
+- `schemas/` defines input validation and API response formats with Pydantic.
+- `database.py` configures the PostgreSQL connection and database sessions.
+- `main.py` creates the FastAPI application, registers the routers, and defines the health check.
 
 ### Frontend
 
-Frontend-ul este o aplicație React cu TypeScript și Vite, stilizată cu Tailwind CSS.
+The frontend is a React application built with TypeScript and Vite, styled with Tailwind CSS.
 
-- `pages/` conține paginile de autentificare, dashboard și tranzacții.
-- `components/` conține elementele reutilizabile ale interfeței și monitorizarea expirării sesiunii.
-- `lib/` conține configurarea API-ului și gestionarea tokenului.
-- `types/` conține tipurile TypeScript folosite de pagini.
+- `pages/` contains the login, dashboard, and transaction pages.
+- `components/` contains reusable interface elements and session-expiration monitoring.
+- `lib/` contains API configuration and token management.
+- `types/` contains the TypeScript types used by the pages.
 
-## Autentificare și acces la date
+## Authentication and Data Access
 
-La autentificare, backend-ul verifică emailul și parola și returnează un JWT. Frontend-ul trimite tokenul în antetul `Authorization: Bearer <token>` pentru rutele protejate.
+When a user logs in, the backend verifies their email and password and returns a JWT. The frontend sends the token in the `Authorization: Bearer <token>` header for protected routes.
 
-Backend-ul identifică utilizatorul din token și folosește ID-ul acestuia pentru a limita accesul la tranzacțiile proprii. Tokenul are un timp de expirare; frontend-ul închide sesiunea când tokenul expiră.
+The backend identifies the user from the token and uses their ID to restrict access to their own transactions. The token expires after a set time; the frontend ends the session when the token expires.
 
 ## API
 
-### Implementate
+### Implemented
 
-- `GET /health` — verifică starea API-ului și conexiunea la PostgreSQL; returnează `503` dacă baza de date nu este disponibilă.
-- `POST /api/v1/auth/register` — înregistrează un utilizator cu parola hash-uită.
-- `POST /api/v1/auth/login` — verifică datele de autentificare și emite un JWT.
-- `GET /api/v1/transactions` — listează tranzacțiile utilizatorului autentificat.
-- `POST /api/v1/transactions` — creează o tranzacție pentru utilizatorul autentificat.
-- `GET /api/v1/transactions/{transaction_id}` — citește o tranzacție a utilizatorului autentificat.
-- `PUT /api/v1/transactions/{transaction_id}` — înlocuiește datele unei tranzacții.
-- `PATCH /api/v1/transactions/{transaction_id}` — actualizează parțial o tranzacție.
-- `DELETE /api/v1/transactions/{transaction_id}` — șterge o tranzacție a utilizatorului autentificat.
-- `GET /api/v1/dashboard/summary` — returnează totalul veniturilor, totalul cheltuielilor și soldul utilizatorului autentificat.
+- `GET /health` — checks the API status and PostgreSQL connection; returns `503` if the database is unavailable.
+- `POST /api/v1/auth/register` — registers a user with a hashed password.
+- `POST /api/v1/auth/login` — verifies the login credentials and issues a JWT.
+- `GET /api/v1/transactions` — lists transactions belonging to the authenticated user.
+- `POST /api/v1/transactions` — creates a transaction for the authenticated user.
+- `GET /api/v1/transactions/{transaction_id}` — retrieves a transaction belonging to the authenticated user.
+- `PUT /api/v1/transactions/{transaction_id}` — replaces a transaction’s data.
+- `PATCH /api/v1/transactions/{transaction_id}` — partially updates a transaction.
+- `DELETE /api/v1/transactions/{transaction_id}` — deletes a transaction belonging to the authenticated user.
+- `GET /api/v1/dashboard/summary` — returns the authenticated user’s total income, total expenses, and balance.
 
-### Planificate
+### Planned
 
-- `GET /api/v1/users/me` — returnează profilul utilizatorului autentificat.
+- `GET /api/v1/users/me` — returns the authenticated user’s profile.
 
-Dashboard-ul folosește sumarul API și lista tranzacțiilor pentru a afișa totalurile, comparația lunară și distribuția cheltuielilor pe categorii.
+The dashboard uses the API summary and transaction list to display totals, a monthly comparison, and spending by category.

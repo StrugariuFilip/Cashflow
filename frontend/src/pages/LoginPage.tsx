@@ -24,13 +24,13 @@ export default function LoginPage() {
     const errors: FieldErrors = {};
 
     if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      errors.email = "Introdu o adresă de email validă.";
+      errors.email = "Enter a valid email address.";
     }
 
     if (!password) {
-      errors.password = "Introdu parola.";
+      errors.password = "Enter your password.";
     } else if (isRegistering && password.length < 8) {
-      errors.password = "Parola trebuie să aibă cel puțin 8 caractere.";
+      errors.password = "Password must be at least 8 characters long.";
     }
 
     setFieldErrors(errors);
@@ -41,7 +41,7 @@ export default function LoginPage() {
     event.preventDefault();
 
     if (!validateForm()) {
-      toast.error("Verifică informațiile marcate din formular.");
+      toast.error("Please check the highlighted fields.");
       return;
     }
 
@@ -59,31 +59,31 @@ export default function LoginPage() {
 
       if (!response.ok) {
         if (response.status === 409) {
-          throw new Error("Există deja un cont cu această adresă de email.");
+          throw new Error("An account with this email address already exists.");
         }
 
         if (response.status === 401) {
-          throw new Error("Emailul sau parola nu sunt corecte.");
+          throw new Error("The email or password is incorrect.");
         }
 
         throw new Error(
           typeof data.detail === "string"
             ? data.detail
-            : "Nu am putut procesa cererea. Verifică datele introduse.",
+            : "Could not process the request. Please check the information you entered.",
         );
       }
 
       if (isRegistering) {
-        toast.success("Contul a fost creat. Te poți autentifica acum.");
+        toast.success("Your account has been created. You can now log in.");
         setIsRegistering(false);
         setPassword("");
       } else {
         saveToken(data.access_token);
-        toast.success("Te-ai autentificat.");
+        toast.success("You are now logged in.");
         navigate("/dashboard");
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Eroare de conectare.");
+      toast.error(err instanceof Error ? err.message : "A connection error occurred.");
     } finally {
       setLoading(false);
     }
@@ -106,13 +106,13 @@ export default function LoginPage() {
         </p>
 
         <h1 className="mt-5 text-3xl font-bold">
-          {isRegistering ? "Creează un cont" : "Autentificare"}
+          {isRegistering ? "Create an account" : "Log in"}
         </h1>
 
         <p className="mt-2 text-muted">
           {isRegistering
-            ? "Înregistrează-te pentru a începe."
-            : "Conectează-te pentru a-ți vedea situația financiară."}
+            ? "Sign up to get started."
+            : "Log in to view your financial overview."}
         </p>
 
         <label className="mb-2 mt-8 block text-sm" htmlFor="email">
@@ -123,7 +123,7 @@ export default function LoginPage() {
           id="email"
           type="email"
           autoComplete="email"
-          placeholder="nume@exemplu.ro"
+          placeholder="name@example.com"
           value={email}
           aria-invalid={Boolean(fieldErrors.email)}
           aria-describedby="email-hint email-error"
@@ -133,7 +133,7 @@ export default function LoginPage() {
           }}
         />
         <p id="email-hint" className="mt-1 text-xs text-muted">
-          Folosește adresa de email a contului tău.
+          Use the email address associated with your account.
         </p>
         {fieldErrors.email && (
           <p id="email-error" className="mt-1 text-sm text-danger">
@@ -142,14 +142,14 @@ export default function LoginPage() {
         )}
 
         <label className="mb-2 mt-5 block text-sm" htmlFor="password">
-          Parolă
+          Password
         </label>
         <input
           className="w-full rounded-xl border border-border bg-background px-4 py-3 text-text outline-none focus:border-accent"
           id="password"
           type="password"
           autoComplete={isRegistering ? "new-password" : "current-password"}
-          placeholder={isRegistering ? "Minimum 8 caractere" : "Parola contului"}
+          placeholder={isRegistering ? "At least 8 characters" : "Your password"}
           value={password}
           aria-invalid={Boolean(fieldErrors.password)}
           aria-describedby="password-hint password-error"
@@ -160,8 +160,8 @@ export default function LoginPage() {
         />
         <p id="password-hint" className="mt-1 text-xs text-muted">
           {isRegistering
-            ? "Alege o parolă de cel puțin 8 caractere."
-            : "Introdu parola folosită la înregistrare."}
+            ? "Choose a password with at least 8 characters."
+            : "Enter the password you used when you registered."}
         </p>
         {fieldErrors.password && (
           <p id="password-error" className="mt-1 text-sm text-danger">
@@ -174,20 +174,20 @@ export default function LoginPage() {
           disabled={loading}
         >
           {loading
-            ? "Se procesează..."
+            ? "Processing..."
             : isRegistering
-              ? "Înregistrează-te"
-              : "Intră în cont"}
+              ? "Sign up"
+              : "Log in"}
         </button>
 
         <p className="mt-6 text-center text-sm text-muted">
-          {isRegistering ? "Ai deja cont?" : "Nu ai cont?"}{" "}
+          {isRegistering ? "Already have an account?" : "Don't have an account?"}{" "}
           <button
             className="font-semibold text-primary hover:text-primary-hover"
             type="button"
             onClick={switchMode}
           >
-            {isRegistering ? "Autentifică-te" : "Creează cont"}
+            {isRegistering ? "Log in" : "Create an account"}
           </button>
         </p>
       </form>

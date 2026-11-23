@@ -44,11 +44,11 @@ class TransactionUpdate(BaseModel):
             return value
 
         if not value:
-            raise ValueError("Trimite cel puțin un câmp pentru actualizare.")
+            raise ValueError("Provide at least one field to update.")
 
         required_fields = ("type", "amount", "category", "transaction_date")
         for field in required_fields:
             if field in value and value[field] is None:
-                raise ValueError(f"Câmpul '{field}' nu poate fi null.")
+                raise ValueError(f"Field '{field}' cannot be null.")
 
         return value

@@ -21,29 +21,29 @@ type CategoryReport = {
 
 const categoryColors = [
   "#8B5CF6", // violet
-  "#F43F5E", // coral-roșu
-  "#FACC15", // galben
-  "#D946EF", // fucsia
-  "#A78BFA", // lavandă
-  "#94A3B8", // gri-lavandă pentru „Altele”
+  "#F43F5E", // coral red
+  "#FACC15", // yellow
+  "#D946EF", // fuchsia
+  "#A78BFA", // lavender
+  "#94A3B8", // lavender gray for "Other"
 ];
 const monthNames = [
-  "Ian",
+  "Jan",
   "Feb",
   "Mar",
   "Apr",
-  "Mai",
-  "Iun",
-  "Iul",
+  "May",
+  "Jun",
+  "Jul",
   "Aug",
   "Sep",
   "Oct",
-  "Noi",
+  "Nov",
   "Dec",
 ];
 
 function formatAmount(amount: number) {
-  return new Intl.NumberFormat("ro-RO", {
+  return new Intl.NumberFormat("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(Number.isFinite(amount) ? amount : 0);
@@ -60,7 +60,7 @@ async function fetchJson<T>(url: string): Promise<T> {
     throw new Error(
       typeof data.detail === "string"
         ? data.detail
-        : "Nu am putut încărca datele dashboard-ului.",
+        : "Could not load dashboard data.",
     );
   }
 
@@ -137,7 +137,7 @@ function getExpenseCategories(
 
   if (otherAmount > 0) {
     categories.push({
-      name: "Altele",
+      name: "Other",
       amount: otherAmount,
       color: categoryColors[5],
     });
@@ -166,7 +166,7 @@ export default function DashboardPage() {
         toast.error(
           err instanceof Error
             ? err.message
-            : "Nu am putut încărca dashboard-ul.",
+            : "Could not load the dashboard.",
         );
       } finally {
         setLoading(false);
@@ -241,18 +241,18 @@ export default function DashboardPage() {
       <div className="flex flex-wrap items-end justify-between gap-5">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-accent">
-            Raport financiar
+            Financial Report
           </p>
           <h1 className="mt-2 text-3xl font-bold text-text">Dashboard</h1>
           <p className="mt-2 text-muted">
-            O privire de ansamblu asupra finanțelor tale.
+            An overview of your finances.
           </p>
         </div>
 
         {years.length > 0 && (
           <div>
             <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted">
-              Anul raportului
+              Report year
             </p>
             <div className="flex flex-wrap gap-2">
               {years.map((year) => (
@@ -275,27 +275,27 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {loading && <p className="mt-8 text-muted">Se încarcă dashboard-ul…</p>}
+      {loading && <p className="mt-8 text-muted">Loading dashboard…</p>}
 
       {!loading && summary && (
         <>
           <section className="mt-8">
-            <p className="mb-3 text-sm text-muted">Totaluri de la început</p>
+            <p className="mb-3 text-sm text-muted">All-time totals</p>
             <div className="grid gap-4 sm:grid-cols-3">
               <SummaryCard
-                label="Venituri totale"
+                label="Total income"
                 amount={Number(summary.total_income)}
                 color="text-accent"
                 dotColor="bg-accent"
               />
               <SummaryCard
-                label="Cheltuieli totale"
+                label="Total expenses"
                 amount={Number(summary.total_expenses)}
                 color="text-orange-400"
                 dotColor="bg-orange-400"
               />
               <SummaryCard
-                label="Sold curent"
+                label="Current balance"
                 amount={Number(summary.balance)}
                 color="text-text"
                 dotColor="bg-muted"
@@ -306,45 +306,45 @@ export default function DashboardPage() {
           <section className="mt-8">
             <div className="mb-4">
               <h2 className="text-xl font-semibold text-text">
-                Perspective pentru {reportYear}
+                {reportYear} Overview
               </h2>
               <p className="mt-1 text-sm text-muted">
-                Indicatori calculați pentru anul selectat.
+                Metrics for the selected year.
               </p>
             </div>
 
             <div className="grid gap-4 md:grid-cols-3">
               <InsightCard
-                eyebrow="Cea mai mare categorie"
-                title={topExpenseCategory?.name ?? "Fără cheltuieli"}
+                eyebrow="Top spending category"
+                title={topExpenseCategory?.name ?? "No expenses"}
                 value={
                   topExpenseCategory
                     ? formatAmount(topExpenseCategory.amount)
                     : "—"
                 }
-                detail="Categoria în care ai cheltuit cel mai mult"
+                detail="The category with the highest spending"
                 color="var(--color-accent)"
               />
 
               <InsightCard
-                eyebrow="Media cheltuielilor"
+                eyebrow="Average monthly expenses"
                 title={
                   monthsWithExpenses > 0
-                    ? `${formatAmount(averageMonthlyExpenses)} / lună`
-                    : "Nu există date"
+                    ? `${formatAmount(averageMonthlyExpenses)} / month`
+                    : "No data"
                 }
-                detail="Media lunilor în care ai avut cheltuieli"
+                detail="Average across months with expenses"
                 color="var(--color-primary)"
               />
 
               <InsightCard
-                eyebrow="Rata de economisire"
+                eyebrow="Savings rate"
                 title={
                   savingsRate === null
-                    ? "Nu există venituri"
+                    ? "No income"
                     : `${savingsRate.toFixed(1)}%`
                 }
-                detail="Venituri minus cheltuieli, raportat la venituri"
+                detail="Income minus expenses, as a percentage of income"
                 color={
                   savingsRate !== null && savingsRate < 0
                     ? "#fb923c"
@@ -357,15 +357,15 @@ export default function DashboardPage() {
           <section className="mt-8 grid gap-6 xl:grid-cols-[1.4fr_1fr]">
             <article className="rounded-2xl border border-border/50 bg-surface p-6">
               <h2 className="text-lg font-semibold text-text">
-                Venituri și cheltuieli pe luni
+                Monthly Income and Expenses
               </h2>
               <p className="mt-1 text-sm text-muted">
-                Comparație lunară pentru {reportYear}
+                Monthly comparison for {reportYear}
               </p>
 
               <div className="mt-5 flex flex-wrap gap-4 text-sm">
-                <Legend color="var(--color-accent)" label="Venituri" />
-                <Legend color="#fb923c" label="Cheltuieli" />
+                <Legend color="var(--color-accent)" label="Income" />
+                <Legend color="#fb923c" label="Expenses" />
               </div>
 
               <div className="mt-6 overflow-x-auto pb-2">
@@ -384,7 +384,7 @@ export default function DashboardPage() {
                               month.income > 0 ? 3 : 0,
                             )}%`,
                           }}
-                          title={`Venituri: ${formatAmount(month.income)}`}
+                          title={`Income: ${formatAmount(month.income)}`}
                         />
                         <div
                           className="w-3 rounded-t-md bg-orange-400 transition-all duration-300 hover:brightness-125"
@@ -394,7 +394,7 @@ export default function DashboardPage() {
                               month.expenses > 0 ? 3 : 0,
                             )}%`,
                           }}
-                          title={`Cheltuieli: ${formatAmount(month.expenses)}`}
+                          title={`Expenses: ${formatAmount(month.expenses)}`}
                         />
                       </div>
                       <span className="mt-2 text-xs text-muted">
@@ -408,15 +408,15 @@ export default function DashboardPage() {
 
             <article className="rounded-2xl border border-border/50 bg-surface p-6">
               <h2 className="text-lg font-semibold text-text">
-                Cheltuieli pe categorii
+                Expenses by Category
               </h2>
               <p className="mt-1 text-sm text-muted">
-                Distribuția cheltuielilor din {reportYear}
+                Expense breakdown for {reportYear}
               </p>
 
               {expenseCategories.length === 0 ? (
                 <p className="mt-8 text-sm text-muted">
-                  Nu există cheltuieli înregistrate pentru anul selectat.
+                  No expenses were recorded for the selected year.
                 </p>
               ) : (
                 <div className="mt-6 flex flex-col items-center gap-7 sm:flex-row xl:flex-col 2xl:flex-row">
@@ -424,11 +424,11 @@ export default function DashboardPage() {
                     className="relative size-40 shrink-0 rounded-full transition-transform duration-300 hover:scale-105"
                     style={{ background: donutBackground }}
                     role="img"
-                    aria-label={`Grafic circular al cheltuielilor pe categorii din ${reportYear}`}
+                    aria-label={`Pie chart of expenses by category for ${reportYear}`}
                   >
                     <div className="absolute inset-5 flex items-center justify-center rounded-full bg-surface text-center">
                       <div>
-                        <p className="text-xs text-muted">Total cheltuit</p>
+                        <p className="text-xs text-muted">Total spent</p>
                         <p className="mt-1 text-sm font-bold text-orange-400">
                           {formatAmount(totalCategoryExpenses)}
                         </p>

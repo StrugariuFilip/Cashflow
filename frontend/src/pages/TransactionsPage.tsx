@@ -44,7 +44,7 @@ export default function TransactionsPage() {
     });
 
     if (!response.ok) {
-      throw new Error("Nu am putut încărca tranzacțiile.");
+      throw new Error("Could not load transactions.");
     }
 
     const data: Transaction[] = await response.json();
@@ -61,18 +61,18 @@ export default function TransactionsPage() {
     editingTransaction === null
       ? []
       : [
-          type !== editingTransaction.type ? null : "tipul",
-          Number(amount) !== Number(editingTransaction.amount) ? null : "suma",
+          type !== editingTransaction.type ? null : "type",
+          Number(amount) !== Number(editingTransaction.amount) ? null : "amount",
           category.trim() !== editingTransaction.category
             ? null
-            : "categoria",
+            : "category",
           (description.trim() || null) !==
           (editingTransaction.description || null)
             ? null
-            : "descrierea",
+            : "description",
           transactionDate !== editingTransaction.transaction_date
             ? null
-            : "data",
+            : "date",
         ].filter((field): field is string => field !== null);
 
   const putNeedsChanges =
@@ -133,22 +133,22 @@ export default function TransactionsPage() {
     const numericAmount = Number(amount);
 
     if (!amount || !Number.isFinite(numericAmount) || numericAmount <= 0) {
-      errors.amount = "Introdu o sumă mai mare decât 0.";
+      errors.amount = "Enter an amount greater than 0.";
     } else if (!/^\d+(\.\d{1,2})?$/.test(amount)) {
-      errors.amount = "Suma poate avea maximum două zecimale.";
+      errors.amount = "The amount can have no more than two decimal places.";
     } else if (amount.replace(".", "").length > 12) {
-      errors.amount = "Suma este prea mare.";
+      errors.amount = "The amount is too large.";
     }
 
     if (!category.trim()) {
       errors.category =
-        "Introdu o categorie, de exemplu «Mâncare» sau «Salariu».";
+        "Enter a category, such as “Food” or “Salary”.";
     } else if (category.trim().length > 50) {
-      errors.category = "Categoria poate avea maximum 50 de caractere.";
+      errors.category = "The category can be up to 50 characters long.";
     }
 
     if (!transactionDate) {
-      errors.transactionDate = "Selectează data tranzacției.";
+      errors.transactionDate = "Select the transaction date.";
     }
 
     setFieldErrors(errors);
@@ -170,23 +170,23 @@ export default function TransactionsPage() {
         return data.detail;
       }
     } catch {
-      // Unele răspunsuri, precum DELETE 204, nu au corp JSON.
+      // Some responses, such as DELETE 204, do not have a JSON body.
     }
 
-    return "Verifică datele și încearcă din nou.";
+    return "Check the information and try again.";
   }
 
   async function saveTransaction(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (!validateForm()) {
-      toast.error("Verifică informațiile marcate din formular.");
+      toast.error("Please check the highlighted fields.");
       return;
     }
 
     if (putNeedsChanges) {
       toast.error(
-        `Pentru PUT trebuie să modifici toate câmpurile: ${unchangedPutFields.join(", ")}.`,
+        `For PUT, you need to change every field: ${unchangedPutFields.join(", ")}.`,
       );
       return;
     }
@@ -225,13 +225,13 @@ export default function TransactionsPage() {
 
       toast.success(
         !isEditing
-          ? "Tranzacția a fost adăugată."
+          ? "Transaction added."
           : updateMethod === "PUT"
-            ? "Tranzacția a fost înlocuită."
-            : "Tranzacția a fost actualizată.",
+            ? "Transaction replaced."
+            : "Transaction updated.",
       );
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "A apărut o eroare.");
+      toast.error(err instanceof Error ? err.message : "An error occurred.");
     } finally {
       setSaving(false);
     }
@@ -264,10 +264,10 @@ export default function TransactionsPage() {
       }
 
       setTransactionToDelete(null);
-      toast.success("Tranzacția a fost ștearsă.");
+      toast.success("Transaction deleted.");
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Nu am putut șterge tranzacția.",
+        err instanceof Error ? err.message : "Could not delete the transaction.",
       );
     } finally {
       setDeleting(false);
@@ -282,11 +282,11 @@ export default function TransactionsPage() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-accent">
-            Activitate financiară
+            Financial Activity
           </p>
-          <h1 className="mt-2 text-3xl font-bold text-text">Tranzacții</h1>
+          <h1 className="mt-2 text-3xl font-bold text-text">Transactions</h1>
           <p className="mt-2 text-muted">
-            Gestionează veniturile și cheltuielile tale.
+            Manage your income and expenses.
           </p>
         </div>
 
@@ -296,24 +296,24 @@ export default function TransactionsPage() {
             onClick={openCreateForm}
             className="cursor-pointer rounded-xl bg-accent px-5 py-3 font-semibold text-background transition duration-200 hover:-translate-y-0.5 hover:brightness-110 hover:shadow-lg hover:shadow-accent/20 active:scale-[0.98]"
           >
-            + Adaugă tranzacție
+            + Add transaction
           </button>
         )}
       </div>
 
       <section className="mt-8 grid gap-4 sm:grid-cols-3">
         <OverviewCard
-          label="Tranzacții"
+          label="Transactions"
           value={String(transactions.length)}
           accent="text-text"
         />
         <OverviewCard
-          label="Venituri"
+          label="Income"
           value={formatAmount(totalIncome)}
           accent="text-accent"
         />
         <OverviewCard
-          label="Cheltuieli"
+          label="Expenses"
           value={formatAmount(totalExpenses)}
           accent="text-primary"
         />
@@ -327,17 +327,17 @@ export default function TransactionsPage() {
         >
           <div className="sm:col-span-2">
             <p className="text-sm font-semibold uppercase tracking-wider text-accent">
-              {editingTransaction ? "Modificare" : "Adăugare"}
+              {editingTransaction ? "Editing" : "Adding"}
             </p>
             <h2 className="mt-1 text-xl font-semibold text-text">
-              {editingTransaction ? "Editează tranzacția" : "Tranzacție nouă"}
+              {editingTransaction ? "Edit transaction" : "New transaction"}
             </h2>
           </div>
 
           {editingTransaction && (
             <div className="sm:col-span-2">
               <span className="mb-2 block text-sm text-text">
-                Metoda de actualizare
+                Update method
               </span>
               <div className="flex flex-wrap gap-2">
                 <button
@@ -350,7 +350,7 @@ export default function TransactionsPage() {
                       : "border-border text-muted hover:border-accent/60 hover:text-text"
                   }`}
                 >
-                  PATCH · actualizare
+                  PATCH · partial update
                 </button>
                 <button
                   type="button"
@@ -362,14 +362,13 @@ export default function TransactionsPage() {
                       : "border-border text-muted hover:border-primary/60 hover:text-text"
                   }`}
                 >
-                  PUT · înlocuire completă
+                  PUT · full replacement
                 </button>
               </div>
 
               {updateMethod === "PUT" && putNeedsChanges && (
                 <p className="mt-2 text-xs text-muted">
-                  Pentru PUT trebuie modificate toate câmpurile. Mai trebuie
-                  schimbate:{" "}
+                  For PUT, all fields must be changed. Fields still to change:{" "}
                   <span className="font-medium text-primary">
                     {unchangedPutFields.join(", ")}
                   </span>
@@ -381,7 +380,7 @@ export default function TransactionsPage() {
 
           <div>
             <span className="mb-2 block text-sm text-text">
-              Tipul tranzacției{" "}
+              Transaction type{" "}
               <span className="text-danger" aria-hidden="true">
                 *
               </span>
@@ -397,7 +396,7 @@ export default function TransactionsPage() {
                     : "text-muted hover:bg-primary/10 hover:text-text"
                 }`}
               >
-                Cheltuială
+                Expense
               </button>
               <button
                 type="button"
@@ -409,14 +408,14 @@ export default function TransactionsPage() {
                     : "text-muted hover:bg-accent/10 hover:text-text"
                 }`}
               >
-                Venit
+                Income
               </button>
             </div>
           </div>
 
           <div>
             <label className="mb-2 block text-sm text-text" htmlFor="amount">
-              Sumă{" "}
+              Amount{" "}
               <span className="text-danger" aria-hidden="true">
                 *
               </span>
@@ -427,7 +426,7 @@ export default function TransactionsPage() {
               type="number"
               min="0.01"
               step="0.01"
-              placeholder="Ex.: 125.50"
+              placeholder="e.g., 125.50"
               value={amount}
               aria-invalid={Boolean(fieldErrors.amount)}
               onChange={(event) => {
@@ -445,7 +444,7 @@ export default function TransactionsPage() {
 
           <div>
             <label className="mb-2 block text-sm text-text" htmlFor="category">
-              Categorie{" "}
+              Category{" "}
               <span className="text-danger" aria-hidden="true">
                 *
               </span>
@@ -453,7 +452,7 @@ export default function TransactionsPage() {
             <input
               id="category"
               className={inputClass}
-              placeholder="Ex.: Mâncare, Salariu, Transport"
+              placeholder="e.g., Food, Salary, Transport"
               maxLength={50}
               value={category}
               aria-invalid={Boolean(fieldErrors.category)}
@@ -475,7 +474,7 @@ export default function TransactionsPage() {
               className="mb-2 block text-sm text-text"
               htmlFor="transaction-date"
             >
-              Data tranzacției{" "}
+              Transaction date{" "}
               <span className="text-danger" aria-hidden="true">
                 *
               </span>
@@ -505,13 +504,13 @@ export default function TransactionsPage() {
               className="mb-2 block text-sm text-text"
               htmlFor="description"
             >
-              Descriere{" "}
-              <span className="text-xs font-normal text-muted">(opțional)</span>
+              Description{" "}
+              <span className="text-xs font-normal text-muted">(optional)</span>
             </label>
             <input
               id="description"
               className={inputClass}
-              placeholder="Ex.: Cumpărături săptămânale"
+              placeholder="e.g., Weekly groceries"
               maxLength={500}
               value={description}
               onChange={(event) => setDescription(event.target.value)}
@@ -525,13 +524,13 @@ export default function TransactionsPage() {
               disabled={saving}
               className="cursor-pointer rounded-xl border border-border px-5 py-3 font-medium text-muted transition hover:border-accent hover:text-text disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Anulează
+              Cancel
             </button>
 
             <div
               title={
                 putNeedsChanges
-                  ? `Mai trebuie schimbate: ${unchangedPutFields.join(", ")}`
+                  ? `Fields still to change: ${unchangedPutFields.join(", ")}`
                   : undefined
               }
             >
@@ -541,10 +540,10 @@ export default function TransactionsPage() {
                 className="cursor-pointer rounded-xl bg-primary px-5 py-3 font-semibold text-background transition duration-200 hover:-translate-y-0.5 hover:bg-primary-hover hover:shadow-lg hover:shadow-primary/20 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none"
               >
                 {saving
-                  ? "Se salvează..."
+                  ? "Saving..."
                   : editingTransaction
-                    ? `Salvează cu ${updateMethod}`
-                    : "Adaugă tranzacția"}
+                    ? `Save with ${updateMethod}`
+                    : "Add transaction"}
               </button>
             </div>
           </div>
@@ -554,18 +553,18 @@ export default function TransactionsPage() {
       <section className="mt-10">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h2 className="text-xl font-semibold text-text">Istoric</h2>
+            <h2 className="text-xl font-semibold text-text">History</h2>
             <p className="mt-1 text-sm text-muted">
-              {visibleTransactions.length} tranzacții afișate
+              {visibleTransactions.length} transactions shown
             </p>
           </div>
 
           <div className="flex rounded-xl border border-border bg-surface p-1">
             {(
               [
-                ["all", "Toate"],
-                ["income", "Venituri"],
-                ["expense", "Cheltuieli"],
+                ["all", "All"],
+                ["income", "Income"],
+                ["expense", "Expenses"],
               ] as const
             ).map(([value, label]) => (
               <button
@@ -586,13 +585,13 @@ export default function TransactionsPage() {
         </div>
 
         <div className="mt-4 space-y-3">
-          {loadingList && <p className="text-muted">Se încarcă tranzacțiile…</p>}
+          {loadingList && <p className="text-muted">Loading transactions…</p>}
 
           {!loadingList && visibleTransactions.length === 0 && (
             <p className="rounded-2xl border border-border/50 bg-surface p-6 text-muted">
               {transactions.length === 0
-                ? "Nu există tranzacții pentru acest cont."
-                : "Nu există tranzacții pentru filtrul selectat."}
+                ? "There are no transactions in this account."
+                : "No transactions match the selected filter."}
             </p>
           )}
 
@@ -640,7 +639,7 @@ export default function TransactionsPage() {
                   onClick={() => openEditForm(transaction, "PATCH")}
                   className="cursor-pointer rounded-lg border border-border px-3 py-2 text-sm text-muted transition hover:border-accent hover:text-accent"
                 >
-                  Editează
+                  Edit
                 </button>
 
                 <button
@@ -648,7 +647,7 @@ export default function TransactionsPage() {
                   onClick={() => setTransactionToDelete(transaction)}
                   className="cursor-pointer rounded-lg border border-danger/40 px-3 py-2 text-sm text-danger transition hover:bg-danger/10"
                 >
-                  Șterge
+                  Delete
                 </button>
               </div>
             </article>
@@ -673,16 +672,16 @@ export default function TransactionsPage() {
             className="w-full max-w-md rounded-2xl border border-border bg-surface p-6 shadow-2xl"
           >
             <p className="text-sm font-semibold uppercase tracking-wider text-danger">
-              Confirmare
+              Confirmation
             </p>
             <h2 id="delete-title" className="mt-2 text-xl font-bold text-text">
-              Ștergi tranzacția?
+              Delete this transaction?
             </h2>
             <p className="mt-2 text-sm text-muted">
-              „
+              “
               {transactionToDelete.description ||
                 transactionToDelete.category}
-              ” va fi eliminată definitiv.
+              ” will be permanently deleted.
             </p>
 
             <div className="mt-6 flex justify-end gap-3">
@@ -692,7 +691,7 @@ export default function TransactionsPage() {
                 onClick={() => setTransactionToDelete(null)}
                 className="cursor-pointer rounded-xl border border-border px-4 py-2 text-sm text-muted transition hover:border-accent hover:text-text disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Anulează
+                Cancel
               </button>
               <button
                 type="button"
@@ -700,7 +699,7 @@ export default function TransactionsPage() {
                 onClick={confirmDelete}
                 className="cursor-pointer rounded-xl bg-danger px-4 py-2 text-sm font-semibold text-background transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {deleting ? "Se șterge..." : "Da, șterge"}
+                {deleting ? "Deleting..." : "Yes, delete"}
               </button>
             </div>
           </section>
@@ -728,7 +727,7 @@ function OverviewCard({
 }
 
 function formatAmount(amount: number) {
-  return new Intl.NumberFormat("ro-RO", {
+  return new Intl.NumberFormat("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(amount);

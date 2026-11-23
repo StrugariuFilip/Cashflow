@@ -11,7 +11,7 @@ load_dotenv("backend/.env")
 password_hasher = PasswordHasher()
 JWT_SECRET = os.getenv("JWT_SECRET")
 if not JWT_SECRET:
-    raise RuntimeError("JWT_SECRET lipsește din backend/.env")
+    raise RuntimeError("JWT_SECRET is missing from backend/.env")
 
 JWT_ALGORITHM = "HS256"
 ACCESS_TOKEN_MINUTES = 30

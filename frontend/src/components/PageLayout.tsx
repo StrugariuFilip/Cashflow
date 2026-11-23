@@ -9,7 +9,7 @@ export default function PageLayout({ children }: { children: ReactNode }) {
 
   function logout() {
     clearToken();
-    toast.success("Te-ai deconectat.");
+    toast.success("You have been logged out.");
     navigate("/login");
   }
 
@@ -32,13 +32,13 @@ export default function PageLayout({ children }: { children: ReactNode }) {
               className="text-muted transition hover:text-accent"
               to="/transactions"
             >
-              Tranzacții
+              Transactions
             </Link>
             <button
               className="rounded-lg border border-border px-3 py-2 transition hover:border-accent hover:text-accent"
               onClick={logout}
             >
-              Deconectare
+              Log out
             </button>
           </nav>
         </header>

@@ -43,7 +43,7 @@ export default function SessionExpirationWatcher() {
       if (expiresAt === null || expiresAt <= Date.now()) {
         alreadyLoggedOut = true;
         clearToken();
-        toast.error("Sesiunea a expirat. Autentifică-te din nou.");
+        toast.error("Your session has expired. Please log in again.");
         navigate("/login", { replace: true });
         return;
       }
