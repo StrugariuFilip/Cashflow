@@ -2,10 +2,19 @@ from datetime import date
 from decimal import Decimal
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    ValidationInfo,
+    field_validator,
+    model_validator,
+)
 
 
 class TransactionCreate(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True, extra="forbid")
+
     type: Literal["income", "expense"]
     amount: Decimal = Field(gt=0, max_digits=12, decimal_places=2)
     category: str = Field(min_length=1, max_length=50)
@@ -26,6 +35,8 @@ class TransactionResponse(BaseModel):
 
 
 class TransactionUpdate(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True, extra="forbid")
+
     type: Literal["income", "expense"] | None = None
     amount: Decimal | None = Field(
         default=None,
@@ -37,6 +48,19 @@ class TransactionUpdate(BaseModel):
     description: str | None = Field(default=None, max_length=500)
     transaction_date: date | None = None
 
+    @field_validator(
+        "type",
+        "amount",
+        "category",
+        "transaction_date",
+        mode="before",
+    )
+    @classmethod
+    def reject_null_required_patch_fields(cls, value, info: ValidationInfo):
+        if value is None:
+            raise ValueError(f"Field '{info.field_name}' cannot be null.")
+        return value
+
     @model_validator(mode="before")
     @classmethod
     def validate_patch_fields(cls, value):
@@ -45,10 +69,5 @@ class TransactionUpdate(BaseModel):
 
         if not value:
             raise ValueError("Provide at least one field to update.")
-
-        required_fields = ("type", "amount", "category", "transaction_date")
-        for field in required_fields:
-            if field in value and value[field] is None:
-                raise ValueError(f"Field '{field}' cannot be null.")
 
         return value

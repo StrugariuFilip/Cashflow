@@ -10,6 +10,26 @@ type FieldErrors = {
   password?: string;
 };
 
+function getApiErrorMessage(detail: unknown): string | null {
+  if (typeof detail === "string") return detail;
+
+  if (Array.isArray(detail)) {
+    const messages = detail
+      .map((item: unknown) => {
+        if (typeof item !== "object" || item === null || !("msg" in item)) {
+          return null;
+        }
+
+        return typeof item.msg === "string" ? item.msg : null;
+      })
+      .filter((message): message is string => message !== null);
+
+    return messages.length > 0 ? messages.join(" ") : null;
+  }
+
+  return null;
+}
+
 export default function LoginPage() {
   const navigate = useNavigate();
   const [isRegistering, setIsRegistering] = useState(false);
@@ -67,9 +87,8 @@ export default function LoginPage() {
         }
 
         throw new Error(
-          typeof data.detail === "string"
-            ? data.detail
-            : "Could not process the request. Please check the information you entered.",
+          getApiErrorMessage(data.detail) ??
+            "Could not process the request. Please check the information you entered.",
         );
       }
 
