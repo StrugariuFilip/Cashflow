@@ -9,5 +9,5 @@ CashFlow is intended to be a full-stack web application for managing personal fi
 - Transactions support income and expenses, with validated categories, amounts, dates, and descriptions.
 - The API provides CRUD operations for transactions and consistent JSON responses.
 - The dashboard calculates income, expenses, and balance from data persisted by the backend.
-- Transaction history is sorted chronologically and deterministically, and works on desktop and mobile.
+- Transaction history is sorted chronologically and deterministically, supports pagination, and works on desktop and mobile.
 - The web interface is responsive and communicates with the API over HTTP/JSON.

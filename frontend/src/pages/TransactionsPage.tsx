@@ -1,10 +1,10 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 
 import PageLayout from "../components/PageLayout";
 import { API_URL } from "../lib/api";
 import { getToken } from "../lib/auth";
-import type { Transaction } from "../types/transaction";
+import type { Summary, Transaction, TransactionPage } from "../types/transaction";
 
 type FieldErrors = {
   amount?: string;
@@ -14,9 +14,14 @@ type FieldErrors = {
 
 type UpdateMethod = "PUT" | "PATCH";
 type TransactionFilter = "all" | "income" | "expense";
+const PAGE_SIZE = 10;
 
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [summary, setSummary] = useState<Summary | null>(null);
+  const [totalTransactions, setTotalTransactions] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [page, setPage] = useState(1);
   const [loadingList, setLoadingList] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -38,24 +43,52 @@ export default function TransactionsPage() {
   );
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
-  async function loadTransactions() {
-    const response = await fetch(`${API_URL}/api/v1/transactions`, {
-      headers: { Authorization: `Bearer ${getToken()}` },
+  const loadTransactions = useCallback(async (
+    pageToLoad = page,
+    filterToLoad = filter,
+  ): Promise<TransactionPage> => {
+    const params = new URLSearchParams({
+      page: String(pageToLoad),
+      page_size: String(PAGE_SIZE),
     });
+    if (filterToLoad !== "all") params.set("type", filterToLoad);
+
+    const response = await fetch(
+      `${API_URL}/api/v1/transactions/history?${params.toString()}`,
+      {
+        headers: { Authorization: `Bearer ${getToken()}` },
+      },
+    );
 
     if (!response.ok) {
-      throw new Error("Could not load transactions.");
+      throw new Error(await getErrorMessage(response));
     }
 
-    const data: Transaction[] = await response.json();
-    setTransactions(data);
-  }
+    const data: TransactionPage = await response.json();
+    setTransactions(data.items);
+    setTotalTransactions(data.total);
+    setTotalPages(data.total_pages);
+    return data;
+  }, [page, filter]);
+
+  const loadSummary = useCallback(async () => {
+    const response = await fetch(`${API_URL}/api/v1/dashboard/summary`, {
+      headers: { Authorization: `Bearer ${getToken()}` },
+    });
+    if (!response.ok) throw new Error(await getErrorMessage(response));
+    setSummary((await response.json()) as Summary);
+  }, []);
 
   useEffect(() => {
+    setLoadingList(true);
     loadTransactions()
       .catch((err: Error) => toast.error(err.message))
       .finally(() => setLoadingList(false));
-  }, []);
+  }, [loadTransactions]);
+
+  useEffect(() => {
+    loadSummary().catch((err: Error) => toast.error(err.message));
+  }, [loadSummary]);
 
   const unchangedPutFields =
     editingTransaction === null
@@ -79,18 +112,6 @@ export default function TransactionsPage() {
     editingTransaction !== null &&
     updateMethod === "PUT" &&
     unchangedPutFields.length > 0;
-
-  const visibleTransactions = transactions.filter((transaction) => {
-    return filter === "all" || transaction.type === filter;
-  });
-
-  const totalIncome = transactions
-    .filter((transaction) => transaction.type === "income")
-    .reduce((total, transaction) => total + Number(transaction.amount), 0);
-
-  const totalExpenses = transactions
-    .filter((transaction) => transaction.type === "expense")
-    .reduce((total, transaction) => total + Number(transaction.amount), 0);
 
   function resetForm() {
     setEditingTransaction(null);
@@ -220,7 +241,11 @@ export default function TransactionsPage() {
         throw new Error(await getErrorMessage(response));
       }
 
-      await loadTransactions();
+      const updatedHistory = await loadTransactions(page, filter);
+      if (!isEditing && updatedHistory.total_pages > page) {
+        setPage(updatedHistory.total_pages);
+      }
+      await loadSummary();
       closeForm();
 
       toast.success(
@@ -255,9 +280,11 @@ export default function TransactionsPage() {
         throw new Error(await getErrorMessage(response));
       }
 
-      setTransactions((current) =>
-        current.filter((item) => item.id !== transactionToDelete.id),
-      );
+      const updatedHistory = await loadTransactions(page, filter);
+      if (page > Math.max(1, updatedHistory.total_pages)) {
+        setPage(Math.max(1, updatedHistory.total_pages));
+      }
+      await loadSummary();
 
       if (editingTransaction?.id === transactionToDelete.id) {
         closeForm();
@@ -304,17 +331,17 @@ export default function TransactionsPage() {
       <section className="mt-8 grid gap-4 sm:grid-cols-3">
         <OverviewCard
           label="Transactions"
-          value={String(transactions.length)}
+          value={String(totalTransactions)}
           accent="text-text"
         />
         <OverviewCard
           label="Income"
-          value={formatAmount(totalIncome)}
+          value={summary ? formatAmount(Number(summary.total_income)) : "—"}
           accent="text-accent"
         />
         <OverviewCard
           label="Expenses"
-          value={formatAmount(totalExpenses)}
+          value={summary ? formatAmount(Number(summary.total_expenses)) : "—"}
           accent="text-primary"
         />
       </section>
@@ -555,7 +582,9 @@ export default function TransactionsPage() {
           <div>
             <h2 className="text-xl font-semibold text-text">History</h2>
             <p className="mt-1 text-sm text-muted">
-              {visibleTransactions.length} transactions shown
+              {totalTransactions === 0
+                ? "0 transactions"
+                : `Showing ${(page - 1) * PAGE_SIZE + 1}–${Math.min(page * PAGE_SIZE, totalTransactions)} of ${totalTransactions} transactions`}
             </p>
           </div>
 
@@ -571,7 +600,10 @@ export default function TransactionsPage() {
                 key={value}
                 type="button"
                 aria-pressed={filter === value}
-                onClick={() => setFilter(value)}
+                onClick={() => {
+                  setPage(1);
+                  setFilter(value);
+                }}
                 className={`cursor-pointer rounded-lg px-3 py-2 text-sm transition ${
                   filter === value
                     ? "bg-accent text-background"
@@ -587,15 +619,15 @@ export default function TransactionsPage() {
         <div className="mt-4 space-y-3">
           {loadingList && <p className="text-muted">Loading transactions…</p>}
 
-          {!loadingList && visibleTransactions.length === 0 && (
+          {!loadingList && transactions.length === 0 && (
             <p className="rounded-2xl border border-border/50 bg-surface p-6 text-muted">
-              {transactions.length === 0
+              {filter === "all"
                 ? "There are no transactions in this account."
                 : "No transactions match the selected filter."}
             </p>
           )}
 
-          {visibleTransactions.map((transaction) => (
+          {transactions.map((transaction) => (
             <article
               key={transaction.id}
               className="flex flex-col gap-4 rounded-2xl border border-border/50 bg-surface p-5 transition duration-200 hover:-translate-y-0.5 hover:border-accent/50 hover:shadow-lg hover:shadow-accent/10 sm:flex-row sm:items-center sm:justify-between"
@@ -652,6 +684,30 @@ export default function TransactionsPage() {
               </div>
             </article>
           ))}
+        </div>
+
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-muted">
+            Page {totalPages === 0 ? 0 : page} of {totalPages}
+          </p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setPage((current) => Math.max(1, current - 1))}
+              disabled={loadingList || page <= 1}
+              className="cursor-pointer rounded-xl border border-border px-4 py-2 text-sm text-muted transition hover:border-accent hover:text-text disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Previous
+            </button>
+            <button
+              type="button"
+              onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+              disabled={loadingList || page >= totalPages}
+              className="cursor-pointer rounded-xl border border-border px-4 py-2 text-sm text-muted transition hover:border-accent hover:text-text disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
         </div>
       </section>
 

@@ -112,6 +112,7 @@ The backend identifies the user from the token and uses their ID to restrict acc
 - `POST /api/v1/auth/register` — registers a user with a hashed password.
 - `POST /api/v1/auth/login` — verifies the login credentials and issues a JWT.
 - `GET /api/v1/transactions` — lists transactions belonging to the authenticated user.
+- `GET /api/v1/transactions/history` — returns the authenticated user’s transaction history in chronological pages; supports page, page size, and optional income / expense filtering.
 - `POST /api/v1/transactions` — creates a transaction for the authenticated user.
 - `GET /api/v1/transactions/{transaction_id}` — retrieves a transaction belonging to the authenticated user.
 - `PUT /api/v1/transactions/{transaction_id}` — replaces a transaction’s data.

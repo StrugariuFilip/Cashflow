@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from decimal import Decimal
+from typing import Literal
 
 from sqlalchemy import case, func
 
@@ -11,6 +12,7 @@ from app.models.transaction import Transaction
 from app.models.user import User
 from app.schemas.transaction import (
     TransactionCreate,
+    TransactionPage,
     TransactionResponse,
     TransactionUpdate,
 )
@@ -39,6 +41,38 @@ def list_transactions(
         .filter(Transaction.user_id == current_user.id)
         .order_by(Transaction.transaction_date, Transaction.id)
         .all()
+    )
+
+
+@router.get("/transactions/history", response_model=TransactionPage)
+def list_transaction_history(
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=10, ge=1, le=100),
+    transaction_type: Literal["income", "expense"] | None = Query(
+        default=None,
+        alias="type",
+    ),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    query = db.query(Transaction).filter(Transaction.user_id == current_user.id)
+    if transaction_type is not None:
+        query = query.filter(Transaction.type == transaction_type)
+
+    total = query.count()
+    transactions = (
+        query.order_by(Transaction.transaction_date, Transaction.id)
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+        .all()
+    )
+
+    return TransactionPage(
+        items=transactions,
+        total=total,
+        page=page,
+        page_size=page_size,
+        total_pages=(total + page_size - 1) // page_size,
     )
 
 

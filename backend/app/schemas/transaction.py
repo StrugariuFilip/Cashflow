@@ -34,6 +34,14 @@ class TransactionResponse(BaseModel):
     user_id: int
 
 
+class TransactionPage(BaseModel):
+    items: list[TransactionResponse]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
+
+
 class TransactionUpdate(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True, extra="forbid")
 

@@ -33,7 +33,7 @@
 
 **Transactions**
 - Create, edit, and delete transactions with a type (income / expense), amount, category, date, and optional description
-- Transaction history displayed in chronological order
+- Transaction history displayed in chronological order with server-side pagination and income / expense filters
 - Each user can view and modify **only their own transactions**
 
 **Dashboard**
@@ -241,6 +241,7 @@ All routes under `/api/v1/dashboard` and `/api/v1/transactions` require the `Aut
 | POST | `/api/v1/auth/login` | – | Authenticates the user and returns a token |
 | GET | `/api/v1/dashboard/summary` | ✔ | Returns the user's financial summary |
 | GET | `/api/v1/transactions` | ✔ | Lists the user's transactions |
+| GET | `/api/v1/transactions/history` | ✔ | Returns a chronologically ordered transaction page; supports `page`, `page_size`, and optional `type` filters |
 | POST | `/api/v1/transactions` | ✔ | Creates a transaction |
 | GET | `/api/v1/transactions/{transaction_id}` | ✔ | Returns a transaction |
 | PUT | `/api/v1/transactions/{transaction_id}` | ✔ | Replaces a transaction's data |
