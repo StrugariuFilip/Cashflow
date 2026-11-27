@@ -1,11 +1,15 @@
 import type { ReactNode } from "react";
+import { useEffect } from "react";
 import { Navigate, Route, Routes } from "react-router";
 
 import { getToken } from "./lib/auth";
 import DashboardPage from "./pages/DashboardPage";
 import LoginPage from "./pages/LoginPage";
 import TransactionsPage from "./pages/TransactionsPage";
+import ProfilePage from "./pages/ProfilePage";
+import SettingsPage from "./pages/SettingsPage";
 import SessionExpirationWatcher from "./components/SessionExpirationWatcher";
+import { applyMode, applyTheme, getSavedMode, getSavedTheme } from "./lib/preferences";
 
 function Protected({ children }: { children: ReactNode }) {
   return getToken() ? <>{children}</> : <Navigate to="/login" replace />;
@@ -13,6 +17,11 @@ function Protected({ children }: { children: ReactNode }) {
 
 export default function App() {
   const token = getToken();
+
+  useEffect(() => {
+    applyTheme(getSavedTheme());
+    applyMode(getSavedMode());
+  }, []);
 
   return (
     <>
@@ -39,6 +48,22 @@ export default function App() {
           element={
             <Protected>
               <TransactionsPage />
+            </Protected>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <Protected>
+              <ProfilePage />
+            </Protected>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <Protected>
+              <SettingsPage />
             </Protected>
           }
         />

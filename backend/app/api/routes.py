@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from decimal import Decimal
 from typing import Literal
 
-from sqlalchemy import case, func
+from sqlalchemy import case, func, or_
 
 from app.schemas.dashboard import DashboardSummary
 from app.core.dependencies import get_current_user, get_db
@@ -48,6 +48,7 @@ def list_transactions(
 def list_transaction_history(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=10, ge=1, le=100),
+    search: str | None = Query(default=None, min_length=1, max_length=100),
     transaction_type: Literal["income", "expense"] | None = Query(
         default=None,
         alias="type",
@@ -58,6 +59,14 @@ def list_transaction_history(
     query = db.query(Transaction).filter(Transaction.user_id == current_user.id)
     if transaction_type is not None:
         query = query.filter(Transaction.type == transaction_type)
+    if search is not None:
+        search_pattern = f"%{search.strip()}%"
+        query = query.filter(
+            or_(
+                Transaction.category.ilike(search_pattern),
+                Transaction.description.ilike(search_pattern),
+            )
+        )
 
     total = query.count()
     transactions = (

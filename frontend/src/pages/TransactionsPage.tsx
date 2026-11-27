@@ -1,9 +1,19 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useSearchParams } from "react-router";
 import { toast } from "sonner";
 
 import PageLayout from "../components/PageLayout";
+import DatePicker from "../components/DatePicker";
 import { API_URL } from "../lib/api";
 import { getToken } from "../lib/auth";
+import {
+  CATEGORY_GROUPS,
+  formatCategory,
+  getCategoryGroup,
+  getCategorySelection,
+  makeCategoryValue,
+  type TransactionType,
+} from "../lib/categories";
 import type { Summary, Transaction, TransactionPage } from "../types/transaction";
 
 type FieldErrors = {
@@ -34,10 +44,15 @@ export default function TransactionsPage() {
   const [transactionToDelete, setTransactionToDelete] =
     useState<Transaction | null>(null);
   const [filter, setFilter] = useState<TransactionFilter>("all");
+  const [searchParams] = useSearchParams();
+  const searchQuery = searchParams.get("search")?.trim() ?? "";
 
   const [type, setType] = useState<"income" | "expense">("expense");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("");
+  const [categoryGroup, setCategoryGroup] = useState("");
+  const [categoryDetail, setCategoryDetail] = useState("");
+  const [customCategory, setCustomCategory] = useState("");
   const [description, setDescription] = useState("");
   const [transactionDate, setTransactionDate] = useState(
     new Date().toISOString().slice(0, 10),
@@ -53,6 +68,7 @@ export default function TransactionsPage() {
       page_size: String(PAGE_SIZE),
     });
     if (filterToLoad !== "all") params.set("type", filterToLoad);
+    if (searchQuery) params.set("search", searchQuery);
 
     const response = await fetch(
       `${API_URL}/api/v1/transactions/history?${params.toString()}`,
@@ -70,7 +86,7 @@ export default function TransactionsPage() {
     setTotalTransactions(data.total);
     setTotalPages(data.total_pages);
     return data;
-  }, [page, filter]);
+  }, [page, filter, searchQuery]);
 
   const loadSummary = useCallback(async () => {
     const response = await fetch(`${API_URL}/api/v1/dashboard/summary`, {
@@ -86,6 +102,10 @@ export default function TransactionsPage() {
       .catch((err: Error) => toast.error(err.message))
       .finally(() => setLoadingList(false));
   }, [loadTransactions]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchQuery]);
 
   useEffect(() => {
     loadSummary().catch((err: Error) => toast.error(err.message));
@@ -120,6 +140,9 @@ export default function TransactionsPage() {
     setType("expense");
     setAmount("");
     setCategory("");
+    setCategoryGroup("");
+    setCategoryDetail("");
+    setCustomCategory("");
     setDescription("");
     setTransactionDate(new Date().toISOString().slice(0, 10));
     setFieldErrors({});
@@ -135,15 +158,30 @@ export default function TransactionsPage() {
     setShowForm(true);
   }
 
+  function chooseType(nextType: TransactionType) {
+    if (nextType !== type) {
+      setCategory("");
+      setCategoryGroup("");
+      setCategoryDetail("");
+      setCustomCategory("");
+    }
+    setType(nextType);
+    setFieldErrors((current) => ({ ...current, category: undefined }));
+  }
+
   function openEditForm(
     transaction: Transaction,
     method: UpdateMethod = "PATCH",
   ) {
+    const selection = getCategorySelection(transaction.type, transaction.category);
     setEditingTransaction(transaction);
     setUpdateMethod(method);
     setType(transaction.type);
     setAmount(String(transaction.amount));
     setCategory(transaction.category);
+    setCategoryGroup(selection.group);
+    setCategoryDetail(selection.detail);
+    setCustomCategory(selection.custom);
     setDescription(transaction.description ?? "");
     setTransactionDate(transaction.transaction_date);
     setFieldErrors({});
@@ -163,9 +201,12 @@ export default function TransactionsPage() {
       errors.amount = "The amount cannot be greater than 9,999,999,999.99.";
     }
 
-    if (!category.trim()) {
-      errors.category =
-        "Enter a category, such as “Food” or “Salary”.";
+    if (!categoryGroup) {
+      errors.category = "Choose a category group.";
+    } else if (categoryGroup === "other" && !customCategory.trim()) {
+      errors.category = "Enter a name for your custom category.";
+    } else if (categoryGroup !== "other" && !categoryDetail) {
+      errors.category = "Choose a subcategory.";
     } else if (category.trim().length > 50) {
       errors.category = "The category can be up to 50 characters long.";
     }
@@ -308,17 +349,19 @@ export default function TransactionsPage() {
   }
 
   const inputClass =
-    "w-full rounded-xl border border-border bg-background px-4 py-3 text-text outline-none transition duration-200 placeholder:text-muted/70 hover:border-accent/60 focus:border-accent focus:ring-2 focus:ring-accent/20";
+    "w-full rounded-xl border border-border bg-surface px-4 py-3 text-text shadow-sm outline-none transition duration-200 placeholder:text-muted/70 hover:border-accent/60 focus:border-accent focus:ring-4 focus:ring-accent/10";
 
   return (
     <PageLayout>
-      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div className="flex flex-wrap items-end justify-between gap-5 rounded-2xl border border-border bg-surface p-6 shadow-sm sm:p-8">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-accent">
-            Financial Activity
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-accent">
+            Account activity
           </p>
-          <h1 className="mt-2 text-3xl font-bold text-text">Transactions</h1>
-          <p className="mt-2 text-muted">
+          <h1 className="mt-2 text-3xl font-bold tracking-tight text-text sm:text-4xl">
+            Transactions
+          </h1>
+          <p className="mt-2 text-sm leading-6 text-muted">
             Manage your income and expenses.
           </p>
         </div>
@@ -327,14 +370,14 @@ export default function TransactionsPage() {
           <button
             type="button"
             onClick={openCreateForm}
-            className="cursor-pointer rounded-xl bg-accent px-5 py-3 font-semibold text-background transition duration-200 hover:-translate-y-0.5 hover:brightness-110 hover:shadow-lg hover:shadow-accent/20 active:scale-[0.98]"
+            className="cursor-pointer rounded-xl bg-accent px-5 py-3 font-semibold text-background shadow-lg shadow-accent/15 transition duration-200 hover:-translate-y-0.5 hover:brightness-110 hover:shadow-accent/25 active:scale-[0.98]"
           >
             + Add transaction
           </button>
         )}
       </div>
 
-      <section className="mt-8 grid gap-4 sm:grid-cols-3">
+        <section className="mt-5 grid gap-3 sm:grid-cols-3">
         <OverviewCard
           label="Transactions"
           value={String(totalTransactions)}
@@ -353,18 +396,31 @@ export default function TransactionsPage() {
       </section>
 
       {showForm && (
-        <form
-          noValidate
-          onSubmit={saveTransaction}
-          className="mt-8 grid gap-5 rounded-2xl border border-border/60 bg-surface p-6 shadow-xl shadow-black/10 sm:grid-cols-2"
+        <div
+          role={editingTransaction ? "dialog" : undefined}
+          aria-modal={editingTransaction ? true : undefined}
+          aria-label={editingTransaction ? "Edit transaction" : undefined}
+          className={editingTransaction ? "fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-3 sm:p-6" : "mt-6"}
         >
-          <div className="sm:col-span-2">
-            <p className="text-sm font-semibold uppercase tracking-wider text-accent">
-              {editingTransaction ? "Editing" : "Adding"}
-            </p>
-            <h2 className="mt-1 text-xl font-semibold text-text">
-              {editingTransaction ? "Edit transaction" : "New transaction"}
-            </h2>
+          {editingTransaction && <button type="button" aria-label="Close edit transaction" onClick={closeForm} disabled={saving} className="absolute inset-0 cursor-default bg-black/70 backdrop-blur-sm disabled:cursor-wait" />}
+          <form
+            noValidate
+            onSubmit={saveTransaction}
+            className={`relative z-10 grid gap-5 rounded-2xl border border-border bg-surface p-5 shadow-sm sm:grid-cols-2 sm:p-7 ${editingTransaction ? "themed-scrollbar max-h-[calc(100dvh-1.5rem)] w-full max-w-3xl overflow-y-auto overscroll-contain shadow-2xl" : ""}`}
+          >
+          <div className="flex items-start justify-between gap-3 sm:col-span-2">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">
+                {editingTransaction ? "Editing" : "Adding"}
+              </p>
+              <h2 className="mt-1 text-2xl font-bold tracking-tight text-text">
+                {editingTransaction ? "Edit transaction" : "New transaction"}
+              </h2>
+              <p className="mt-1 text-sm text-muted">
+                Add the details below and keep your history up to date.
+              </p>
+            </div>
+            {editingTransaction && <button type="button" aria-label="Close edit form" onClick={closeForm} disabled={saving} className="flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-xl border border-border text-muted transition hover:border-accent/60 hover:bg-accent/10 hover:text-accent disabled:cursor-not-allowed disabled:opacity-50">×</button>}
           </div>
 
           {editingTransaction && (
@@ -418,12 +474,12 @@ export default function TransactionsPage() {
                 *
               </span>
             </span>
-            <div className="grid grid-cols-2 rounded-xl border border-border bg-background p-1">
+            <div className="grid grid-cols-2 rounded-2xl border border-border/70 bg-background p-1.5">
               <button
                 type="button"
                 aria-pressed={type === "expense"}
-                onClick={() => setType("expense")}
-                className={`cursor-pointer rounded-lg px-4 py-3 text-sm font-medium transition ${
+                onClick={() => chooseType("expense")}
+                  className={`cursor-pointer rounded-xl px-4 py-3 text-sm font-semibold transition ${
                   type === "expense"
                     ? "bg-primary text-background shadow-md shadow-primary/20"
                     : "text-muted hover:bg-primary/10 hover:text-text"
@@ -434,8 +490,8 @@ export default function TransactionsPage() {
               <button
                 type="button"
                 aria-pressed={type === "income"}
-                onClick={() => setType("income")}
-                className={`cursor-pointer rounded-lg px-4 py-3 text-sm font-medium transition ${
+                onClick={() => chooseType("income")}
+                  className={`cursor-pointer rounded-xl px-4 py-3 text-sm font-semibold transition ${
                   type === "income"
                     ? "bg-accent text-background shadow-md shadow-accent/20"
                     : "text-muted hover:bg-accent/10 hover:text-text"
@@ -480,32 +536,82 @@ export default function TransactionsPage() {
             )}
           </div>
 
-          <div>
-            <label className="mb-2 block text-sm text-text" htmlFor="category">
-              Category{" "}
-              <span className="text-danger" aria-hidden="true">
-                *
-              </span>
-            </label>
-            <input
-              id="category"
-              className={inputClass}
-              placeholder="e.g., Food, Salary, Transport"
-              required
-              maxLength={50}
-              value={category}
-              aria-invalid={Boolean(fieldErrors.category)}
-              aria-describedby={fieldErrors.category ? "category-error" : undefined}
-              onChange={(event) => {
-                setCategory(event.target.value);
-                setFieldErrors((current) => ({
-                  ...current,
-                  category: undefined,
-                }));
-              }}
-            />
+          <div className="sm:col-span-2">
+            <div className="mb-3">
+              <label className="block text-sm font-medium text-text" htmlFor="category-group">
+                Category <span className="text-danger" aria-hidden="true">*</span>
+              </label>
+              <p className="mt-1 text-xs text-muted">
+                Choose a group, then narrow it down with a subcategory.
+              </p>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="relative">
+                <StyledSelect
+                  id="category-group"
+                  value={categoryGroup}
+                  placeholder="Select a category"
+                  ariaLabel="Category group"
+                  invalid={Boolean(fieldErrors.category && !categoryGroup)}
+                  options={CATEGORY_GROUPS[type].map((group) => ({
+                    value: group.value,
+                    label: group.label,
+                  }))}
+                  onChange={(nextGroup) => {
+                    setCategoryGroup(nextGroup);
+                    setCategoryDetail("");
+                    setCustomCategory("");
+                    setCategory("");
+                    setFieldErrors((current) => ({ ...current, category: undefined }));
+                  }}
+                />
+              </div>
+
+              {categoryGroup === "other" ? (
+                <input
+                  id="category"
+                  className={inputClass}
+                  placeholder="Name your category"
+                  required
+                  maxLength={50}
+                  value={customCategory}
+                  aria-label="Custom category name"
+                  aria-invalid={Boolean(fieldErrors.category)}
+                  aria-describedby={fieldErrors.category ? "category-error" : undefined}
+                  onChange={(event) => {
+                    setCustomCategory(event.target.value);
+                    setCategory(event.target.value);
+                    setFieldErrors((current) => ({ ...current, category: undefined }));
+                  }}
+                />
+              ) : (
+                <div className="relative">
+                  <StyledSelect
+                    id="category"
+                    disabled={!categoryGroup}
+                    value={categoryDetail}
+                    placeholder={categoryGroup ? "Choose a subcategory" : "Choose a category first"}
+                    ariaLabel="Transaction subcategory"
+                    invalid={Boolean(fieldErrors.category && categoryGroup)}
+                    options={CATEGORY_GROUPS[type]
+                      .find((group) => group.value === categoryGroup)
+                      ?.children.map((detail) => ({
+                        value: detail.value,
+                        label: detail.label,
+                      })) ?? []}
+                    onChange={(nextDetail) => {
+                      setCategoryDetail(nextDetail);
+                      setCategory(
+                        makeCategoryValue(type, categoryGroup, nextDetail, ""),
+                      );
+                      setFieldErrors((current) => ({ ...current, category: undefined }));
+                    }}
+                  />
+                </div>
+              )}
+            </div>
             {fieldErrors.category && (
-              <p id="category-error" className="mt-1 text-sm text-danger">
+              <p id="category-error" className="mt-2 text-sm text-danger">
                 {fieldErrors.category}
               </p>
             )}
@@ -521,18 +627,15 @@ export default function TransactionsPage() {
                 *
               </span>
             </label>
-            <input
+            <DatePicker
               id="transaction-date"
-              className={inputClass}
-              type="date"
-              required
               value={transactionDate}
-              aria-invalid={Boolean(fieldErrors.transactionDate)}
-              aria-describedby={
+              invalid={Boolean(fieldErrors.transactionDate)}
+              describedBy={
                 fieldErrors.transactionDate ? "transaction-date-error" : undefined
               }
-              onChange={(event) => {
-                setTransactionDate(event.target.value);
+              onChange={(nextDate) => {
+                setTransactionDate(nextDate);
                 setFieldErrors((current) => ({
                   ...current,
                   transactionDate: undefined,
@@ -610,13 +713,14 @@ export default function TransactionsPage() {
               </button>
             </div>
           </div>
-        </form>
+          </form>
+        </div>
       )}
 
-      <section className="mt-10">
+      <section className="mt-9 rounded-2xl border border-border bg-surface p-5 shadow-sm sm:p-7">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h2 className="text-xl font-semibold text-text">History</h2>
+            <h2 className="text-xl font-bold tracking-tight text-text">History</h2>
             <p className="mt-1 text-sm text-muted">
               {totalTransactions === 0
                 ? "0 transactions"
@@ -666,7 +770,7 @@ export default function TransactionsPage() {
           {transactions.map((transaction) => (
             <article
               key={transaction.id}
-              className="flex flex-col gap-4 rounded-2xl border border-border/50 bg-surface p-5 transition duration-200 hover:-translate-y-0.5 hover:border-accent/50 hover:shadow-lg hover:shadow-accent/10 sm:flex-row sm:items-center sm:justify-between"
+              className="flex flex-col gap-4 rounded-xl border border-border bg-surface p-4 transition duration-200 hover:border-accent/40 hover:shadow-md sm:flex-row sm:items-center sm:justify-between sm:p-5"
             >
               <div className="flex min-w-0 items-start gap-4">
                 <span
@@ -684,9 +788,17 @@ export default function TransactionsPage() {
                   <p className="truncate font-semibold text-text">
                     {transaction.description || transaction.category}
                   </p>
-                  <p className="mt-1 text-sm text-muted">
-                    {transaction.category} · {transaction.transaction_date}
-                  </p>
+                  <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                    <span
+                      className="rounded-full border px-2.5 py-1 font-medium"
+                      style={getCategoryChipStyle(transaction.category)}
+                    >
+                      {formatCategory(transaction.category)}
+                    </span>
+                    <span className="text-muted/80">
+                      {formatDate(transaction.transaction_date)}
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -811,11 +923,106 @@ function OverviewCard({
   accent: string;
 }) {
   return (
-    <article className="rounded-2xl border border-border/50 bg-surface p-5 transition duration-200 hover:-translate-y-0.5 hover:border-accent/40">
+    <article className="rounded-2xl border border-border bg-surface p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md">
       <p className="text-sm text-muted">{label}</p>
       <p className={`mt-2 text-xl font-bold ${accent}`}>{value}</p>
     </article>
   );
+}
+
+function StyledSelect({
+  id,
+  value,
+  placeholder,
+  options,
+  disabled = false,
+  invalid = false,
+  ariaLabel,
+  onChange,
+}: {
+  id: string;
+  value: string;
+  placeholder: string;
+  options: { value: string; label: string }[];
+  disabled?: boolean;
+  invalid?: boolean;
+  ariaLabel: string;
+  onChange: (value: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const selected = options.find((option) => option.value === value);
+
+  return (
+    <div className="relative">
+      <button
+        id={id}
+        type="button"
+        disabled={disabled}
+        aria-label={ariaLabel}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-invalid={invalid}
+        onClick={() => setOpen((current) => !current)}
+        className={`flex w-full cursor-pointer items-center justify-between rounded-xl border bg-surface px-4 py-3 text-left text-sm shadow-sm transition duration-200 hover:border-accent/60 focus:border-accent focus:outline-none focus:ring-4 focus:ring-accent/10 disabled:cursor-not-allowed disabled:bg-background disabled:text-muted/60 ${invalid ? "border-danger" : "border-border"}`}
+      >
+        <span className={selected ? "font-medium text-text" : "text-muted"}>
+          {selected?.label ?? placeholder}
+        </span>
+        <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className={`size-4 text-muted transition-transform ${open ? "rotate-180" : ""}`}>
+          <path d="m5 7.5 5 5 5-5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+      {open && !disabled && (
+        <>
+          <button aria-label="Close category options" tabIndex={-1} className="fixed inset-0 z-20 cursor-default" onClick={() => setOpen(false)} />
+        <div role="listbox" aria-label={ariaLabel} className="themed-scrollbar absolute left-0 top-[calc(100%+8px)] z-30 max-h-64 w-full overflow-y-auto rounded-2xl border border-border bg-surface p-1.5 shadow-xl shadow-black/15">
+            {options.map((option, index) => (
+              <button
+                key={option.value}
+                type="button"
+                role="option"
+                aria-selected={value === option.value}
+                onClick={() => {
+                  onChange(option.value);
+                  setOpen(false);
+                }}
+                className={`flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition hover:bg-accent/10 ${value === option.value ? "bg-accent/10 font-semibold text-accent" : "text-text"}`}
+              >
+                <span className={`flex size-7 items-center justify-center rounded-lg text-xs font-bold ${value === option.value ? "bg-accent text-white" : "bg-background text-muted"}`}>
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+                {option.label}
+                {value === option.value && <span className="ml-auto text-accent">✓</span>}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function getCategoryChipStyle(category: string) {
+  const group = getCategoryGroup(category);
+  const colorByGroup: Record<string, string> = {
+    Home: "var(--color-category-1)",
+    Food: "var(--color-category-2)",
+    Transport: "var(--color-category-3)",
+    Personal: "var(--color-category-4)",
+    Leisure: "var(--color-category-5)",
+    Work: "var(--color-category-6)",
+    Investments: "var(--color-category-1)",
+    "Rental income": "var(--color-category-3)",
+    "Gifts & rewards": "var(--color-category-5)",
+    Other: "var(--color-category-6)",
+  };
+  const color = colorByGroup[group] ?? "var(--color-muted)";
+
+  return {
+    color,
+    borderColor: `color-mix(in srgb, ${color} 40%, transparent)`,
+    backgroundColor: `color-mix(in srgb, ${color} 12%, var(--color-background))`,
+  };
 }
 
 function formatAmount(amount: number) {
@@ -823,4 +1030,13 @@ function formatAmount(amount: number) {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(amount);
+}
+
+function formatDate(value: string) {
+  const date = new Date(`${value}T12:00:00`);
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(date);
 }
