@@ -305,7 +305,7 @@ Work is organized into GitHub milestones, each grouping issues with acceptance c
 |---|---|---|:---:|
 | M1 | Project Foundation | Repository structure, FastAPI + PostgreSQL, `/health`, React/Vite/Tailwind setup, local configuration, and migrations | ✅ |
 | M2 | Authentication | Registration / login, Argon2 hashing, JWT, protected routes, and session expiration | ✅ |
-| M3 | Transactions | CRUD, per-user data isolation, validation, chronological history, and forms | 🟡 |
+| M3 | Transactions | CRUD, per-user data isolation, validation, chronological history, and forms | ✅ |
 | M4 | Dashboard | Totals and balance, recent transactions, monthly comparison, spending by category, and charts | ✅ |
 | M5 | UI/UX and Responsiveness | Mobile/desktop layout, loading/empty/error states, clear messages, and confirmations | 🟡 |
 | M6 | Optional Features | Filter by category/date and CSV export | ⬜ |
