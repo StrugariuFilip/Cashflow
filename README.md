@@ -303,7 +303,7 @@ Work is organized into GitHub milestones, each grouping issues with acceptance c
 
 | # | Milestone | Scope | Status |
 |---|---|---|:---:|
-| M1 | Project Foundation | Repository structure, FastAPI + PostgreSQL, `/health`, React/Vite/Tailwind setup, local configuration, and migrations | 🟡 |
+| M1 | Project Foundation | Repository structure, FastAPI + PostgreSQL, `/health`, React/Vite/Tailwind setup, local configuration, and migrations | ✅ |
 | M2 | Authentication | Registration / login, Argon2 hashing, JWT, protected routes, and session expiration | ✅ |
 | M3 | Transactions | CRUD, per-user data isolation, validation, chronological history, and forms | 🟡 |
 | M4 | Dashboard | Totals and balance, recent transactions, monthly comparison, spending by category, and charts | ✅ |

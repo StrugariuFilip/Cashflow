@@ -9,6 +9,7 @@ import type { Summary, Transaction, TransactionPage } from "../types/transaction
 type FieldErrors = {
   amount?: string;
   category?: string;
+  description?: string;
   transactionDate?: string;
 };
 
@@ -152,13 +153,14 @@ export default function TransactionsPage() {
   function validateForm() {
     const errors: FieldErrors = {};
     const numericAmount = Number(amount);
+    const amountIntegerDigits = amount.split(".")[0]?.replace(/^0+/, "") ?? "";
 
     if (!amount || !Number.isFinite(numericAmount) || numericAmount <= 0) {
       errors.amount = "Enter an amount greater than 0.";
     } else if (!/^\d+(\.\d{1,2})?$/.test(amount)) {
       errors.amount = "The amount can have no more than two decimal places.";
-    } else if (amount.replace(".", "").length > 12) {
-      errors.amount = "The amount is too large.";
+    } else if (amountIntegerDigits.length > 10) {
+      errors.amount = "The amount cannot be greater than 9,999,999,999.99.";
     }
 
     if (!category.trim()) {
@@ -170,6 +172,10 @@ export default function TransactionsPage() {
 
     if (!transactionDate) {
       errors.transactionDate = "Select the transaction date.";
+    }
+
+    if (description.trim().length > 500) {
+      errors.description = "The description can be up to 500 characters long.";
     }
 
     setFieldErrors(errors);
@@ -451,11 +457,14 @@ export default function TransactionsPage() {
               id="amount"
               className={inputClass}
               type="number"
+              required
               min="0.01"
+              max="9999999999.99"
               step="0.01"
               placeholder="e.g., 125.50"
               value={amount}
               aria-invalid={Boolean(fieldErrors.amount)}
+              aria-describedby={fieldErrors.amount ? "amount-error" : undefined}
               onChange={(event) => {
                 setAmount(event.target.value);
                 setFieldErrors((current) => ({
@@ -465,7 +474,9 @@ export default function TransactionsPage() {
               }}
             />
             {fieldErrors.amount && (
-              <p className="mt-1 text-sm text-danger">{fieldErrors.amount}</p>
+              <p id="amount-error" className="mt-1 text-sm text-danger">
+                {fieldErrors.amount}
+              </p>
             )}
           </div>
 
@@ -480,9 +491,11 @@ export default function TransactionsPage() {
               id="category"
               className={inputClass}
               placeholder="e.g., Food, Salary, Transport"
+              required
               maxLength={50}
               value={category}
               aria-invalid={Boolean(fieldErrors.category)}
+              aria-describedby={fieldErrors.category ? "category-error" : undefined}
               onChange={(event) => {
                 setCategory(event.target.value);
                 setFieldErrors((current) => ({
@@ -492,7 +505,9 @@ export default function TransactionsPage() {
               }}
             />
             {fieldErrors.category && (
-              <p className="mt-1 text-sm text-danger">{fieldErrors.category}</p>
+              <p id="category-error" className="mt-1 text-sm text-danger">
+                {fieldErrors.category}
+              </p>
             )}
           </div>
 
@@ -510,7 +525,12 @@ export default function TransactionsPage() {
               id="transaction-date"
               className={inputClass}
               type="date"
+              required
               value={transactionDate}
+              aria-invalid={Boolean(fieldErrors.transactionDate)}
+              aria-describedby={
+                fieldErrors.transactionDate ? "transaction-date-error" : undefined
+              }
               onChange={(event) => {
                 setTransactionDate(event.target.value);
                 setFieldErrors((current) => ({
@@ -520,7 +540,7 @@ export default function TransactionsPage() {
               }}
             />
             {fieldErrors.transactionDate && (
-              <p className="mt-1 text-sm text-danger">
+              <p id="transaction-date-error" className="mt-1 text-sm text-danger">
                 {fieldErrors.transactionDate}
               </p>
             )}
@@ -540,8 +560,24 @@ export default function TransactionsPage() {
               placeholder="e.g., Weekly groceries"
               maxLength={500}
               value={description}
-              onChange={(event) => setDescription(event.target.value)}
+              aria-invalid={Boolean(fieldErrors.description)}
+              aria-describedby={
+                fieldErrors.description ? "description-error" : "description-help"
+              }
+              onChange={(event) => {
+                setDescription(event.target.value);
+                setFieldErrors((current) => ({
+                  ...current,
+                  description: undefined,
+                }));
+              }}
             />
+            <p
+              id={fieldErrors.description ? "description-error" : "description-help"}
+              className={`mt-1 text-sm ${fieldErrors.description ? "text-danger" : "text-muted"}`}
+            >
+              {fieldErrors.description ?? `${description.length}/500 characters`}
+            </p>
           </div>
 
           <div className="flex flex-col-reverse gap-3 sm:col-span-2 sm:flex-row sm:justify-end">
