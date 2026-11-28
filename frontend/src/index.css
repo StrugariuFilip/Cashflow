@@ -83,6 +83,10 @@
   --color-chart-4: #ff6b8a;
   --color-chart-5: #b991e8;
   --color-chart-6: #ffbd72;
+}
+
+/* Category colors stay separate from the income (violet) and expense (orange) colors. */
+:root {
   --color-category-1: #54c6d9;
   --color-category-2: #58c488;
   --color-category-3: #678df2;
@@ -104,15 +108,27 @@
 }
 
 :root[data-theme="blue"] {
-  --color-primary: #38bdf8;
-  --color-primary-hover: #7dd3fc;
-  --color-accent: #7827ff;
-  --color-chart-1: #7827ff;
-  --color-chart-2: #38bdf8;
-  --color-chart-3: #ff8a2b;
-  --color-chart-4: #ff6b8a;
-  --color-chart-5: #b991e8;
-  --color-chart-6: #ffbd72;
+  --color-primary: #22d3ee;
+  --color-primary-hover: #67e8f9;
+  --color-accent: #3155e7;
+  --color-chart-1: #3155e7;
+  --color-chart-2: #22d3ee;
+  --color-chart-3: #45d6a0;
+  --color-chart-4: #ffbe55;
+  --color-chart-5: #a78bfa;
+  --color-chart-6: #fb7185;
+}
+
+:root[data-theme="neon"] {
+  --color-primary: #ff3d8d;
+  --color-primary-hover: #ff73ad;
+  --color-accent: #00d7e9;
+  --color-chart-1: #b3f000;
+  --color-chart-2: #ff3d8d;
+  --color-chart-3: #00d7e9;
+  --color-chart-4: #ff9f1c;
+  --color-chart-5: #9b6bff;
+  --color-chart-6: #ff5e5b;
 }
 
 :root[data-mode="light"] {
@@ -125,12 +141,6 @@
   --color-primary-hover: #a9490b;
   --color-accent: #6427c7;
   --color-danger: #c83e58;
-  --color-chart-1: #6c31cf;
-  --color-chart-2: #c65b12;
-  --color-chart-3: #2369b2;
-  --color-chart-4: #c23d63;
-  --color-chart-5: #8150b7;
-  --color-chart-6: #a86a16;
   --color-category-1: #107e93;
   --color-category-2: #2a8b5c;
   --color-category-3: #315cbd;
@@ -139,59 +149,29 @@
   --color-category-6: #526b7b;
 }
 
-:root[data-mode="light"][data-theme="violet"] {
-  --color-primary: #7041bd;
-  --color-primary-hover: #59339a;
-  --color-accent: #385fbb;
-  --color-chart-2: #7041bd;
+:root[data-mode="light"][data-theme="neon"] {
+  --color-primary: #c2185b;
+  --color-primary-hover: #a3124c;
+  --color-accent: #007c91;
+  --color-chart-1: #679000;
+  --color-chart-2: #c2185b;
+  --color-chart-3: #007c91;
+  --color-chart-4: #c26a00;
+  --color-chart-5: #6741b8;
+  --color-chart-6: #c33939;
 }
 
 :root[data-mode="light"][data-theme="blue"] {
-  --color-primary: #14749d;
-  --color-primary-hover: #0e5c7e;
-  --color-accent: #6427c7;
-  --color-chart-2: #14749d;
+  --color-primary: #0e7490;
+  --color-primary-hover: #155e75;
+  --color-accent: #2541ae;
+  --color-chart-1: #2541ae;
+  --color-chart-2: #0e7490;
+  --color-chart-3: #16845f;
+  --color-chart-4: #a85e00;
+  --color-chart-5: #6741b8;
+  --color-chart-6: #c33955;
 }
-
-.sidebar-promo {
-  border-color: rgb(255 255 255 / 12%);
-  background: linear-gradient(145deg, #292134, #17131d 58%, #2b1c22);
-  color: #f8f5ff;
-}
-
-.sidebar-promo-icon {
-  background: rgb(120 39 255 / 18%);
-  color: #c39cff;
-}
-
-.sidebar-promo p:last-child {
-  color: rgb(248 245 255 / 68%);
-}
-
-.themed-scrollbar {
-  scrollbar-color: color-mix(in srgb, var(--color-accent) 58%, var(--color-border)) transparent;
-  scrollbar-width: thin;
-}
-
-.themed-scrollbar::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-.themed-scrollbar::-webkit-scrollbar-track {
-  border-radius: 999px;
-  background: transparent;
-}
-
-.themed-scrollbar::-webkit-scrollbar-thumb {
-  border: 2px solid transparent;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--color-accent) 58%, var(--color-border));
-  background-clip: padding-box;
-}
-
-
-
 
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {

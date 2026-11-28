@@ -1,4 +1,4 @@
-export type ColorTheme = "flamingo" | "violet" | "blue";
+export type ColorTheme = "flamingo" | "violet" | "blue" | "neon";
 export type ColorMode = "dark" | "light";
 
 const THEME_KEY = "cashflow_color_theme";
@@ -6,7 +6,7 @@ const MODE_KEY = "cashflow_color_mode";
 
 export function getSavedTheme(): ColorTheme {
   const saved = localStorage.getItem(THEME_KEY);
-  return saved === "violet" || saved === "blue" ? saved : "flamingo";
+  return saved === "violet" || saved === "blue" || saved === "neon" ? saved : "flamingo";
 }
 
 export function applyTheme(theme: ColorTheme) {

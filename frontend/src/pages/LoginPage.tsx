@@ -6,8 +6,11 @@ import { API_URL } from "../lib/api";
 import { getToken, saveToken } from "../lib/auth";
 
 type FieldErrors = {
+  firstName?: string;
+  lastName?: string;
   email?: string;
   password?: string;
+  confirmPassword?: string;
 };
 
 function getApiErrorMessage(detail: unknown): string | null {
@@ -35,8 +38,12 @@ export default function LoginPage() {
   const [isRegistering, setIsRegistering] = useState(false);
   const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [loading, setLoading] = useState(false);
   const [resetNotice, setResetNotice] = useState("");
@@ -45,6 +52,18 @@ export default function LoginPage() {
 
   function validateForm() {
     const errors: FieldErrors = {};
+
+    if (isRegistering && !firstName.trim()) {
+      errors.firstName = "Enter your first name.";
+    } else if (isRegistering && firstName.trim().length > 50) {
+      errors.firstName = "First name must be 50 characters or fewer.";
+    }
+
+    if (isRegistering && !lastName.trim()) {
+      errors.lastName = "Enter your last name.";
+    } else if (isRegistering && lastName.trim().length > 50) {
+      errors.lastName = "Last name must be 50 characters or fewer.";
+    }
 
     if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       errors.email = "Enter a valid email address.";
@@ -56,6 +75,12 @@ export default function LoginPage() {
       } else if (isRegistering && password.length < 8) {
         errors.password = "Password must be at least 8 characters long.";
       }
+    }
+
+    if (isRegistering && !confirmPassword) {
+      errors.confirmPassword = "Confirm your password.";
+    } else if (isRegistering && password !== confirmPassword) {
+      errors.confirmPassword = "The passwords do not match.";
     }
 
     setFieldErrors(errors);
@@ -85,7 +110,16 @@ export default function LoginPage() {
       const response = await fetch(`${API_URL}/api/v1/auth/${endpoint}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), password }),
+        body: JSON.stringify(
+          isRegistering
+            ? {
+                first_name: firstName.trim(),
+                last_name: lastName.trim(),
+                email: email.trim(),
+                password,
+              }
+            : { email: email.trim(), password },
+        ),
       });
 
       const data = await response.json();
@@ -141,7 +175,9 @@ export default function LoginPage() {
     setFieldErrors({});
     setResetNotice("");
     setPassword("");
+    setConfirmPassword("");
     setShowPassword(false);
+    setShowConfirmPassword(false);
   }
 
   function openPasswordReset() {
@@ -150,7 +186,9 @@ export default function LoginPage() {
     setFieldErrors({});
     setResetNotice("");
     setPassword("");
+    setConfirmPassword("");
     setShowPassword(false);
+    setShowConfirmPassword(false);
   }
 
   function returnToLogin() {
@@ -256,6 +294,53 @@ export default function LoginPage() {
                   ? "Start organizing your finances in one place."
                   : "Log in to see your financial overview."}
             </p>
+
+            {isRegistering && (
+              <div className="mt-7 grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-2 block text-sm font-medium" htmlFor="first-name">
+                    First name
+                  </label>
+                  <input
+                    className="w-full rounded-xl border border-border bg-background px-4 py-3.5 text-text outline-none transition placeholder:text-muted/60 hover:border-accent/50 focus:border-accent focus:ring-2 focus:ring-accent/20"
+                    id="first-name"
+                    type="text"
+                    autoComplete="given-name"
+                    placeholder="First name"
+                    maxLength={50}
+                    required
+                    value={firstName}
+                    aria-invalid={Boolean(fieldErrors.firstName)}
+                    onChange={(event) => {
+                      setFirstName(event.target.value);
+                      setFieldErrors((current) => ({ ...current, firstName: undefined }));
+                    }}
+                  />
+                  {fieldErrors.firstName && <p className="mt-1 text-xs text-danger">{fieldErrors.firstName}</p>}
+                </div>
+                <div>
+                  <label className="mb-2 block text-sm font-medium" htmlFor="last-name">
+                    Last name
+                  </label>
+                  <input
+                    className="w-full rounded-xl border border-border bg-background px-4 py-3.5 text-text outline-none transition placeholder:text-muted/60 hover:border-accent/50 focus:border-accent focus:ring-2 focus:ring-accent/20"
+                    id="last-name"
+                    type="text"
+                    autoComplete="family-name"
+                    placeholder="Last name"
+                    maxLength={50}
+                    required
+                    value={lastName}
+                    aria-invalid={Boolean(fieldErrors.lastName)}
+                    onChange={(event) => {
+                      setLastName(event.target.value);
+                      setFieldErrors((current) => ({ ...current, lastName: undefined }));
+                    }}
+                  />
+                  {fieldErrors.lastName && <p className="mt-1 text-xs text-danger">{fieldErrors.lastName}</p>}
+                </div>
+              </div>
+            )}
 
             <label className="mb-2 mt-7 block text-sm font-medium" htmlFor="email">
               Email address
@@ -397,6 +482,45 @@ export default function LoginPage() {
                   <p id="password-error" className="mt-1 text-sm text-danger">
                     {fieldErrors.password}
                   </p>
+                )}
+                {isRegistering && (
+                  <div className="mt-5">
+                    <label className="mb-2 block text-sm font-medium" htmlFor="confirm-password">
+                      Confirm password
+                    </label>
+                    <div className="relative">
+                      <input
+                        className="w-full rounded-xl border border-border bg-background px-4 py-3.5 pr-12 text-text outline-none transition placeholder:text-muted/60 hover:border-accent/50 focus:border-accent focus:ring-2 focus:ring-accent/20"
+                        id="confirm-password"
+                        type={showConfirmPassword ? "text" : "password"}
+                        autoComplete="new-password"
+                        placeholder="Enter your password again"
+                        maxLength={128}
+                        required
+                        value={confirmPassword}
+                        aria-invalid={Boolean(fieldErrors.confirmPassword)}
+                        aria-describedby="confirm-password-hint confirm-password-error"
+                        onChange={(event) => {
+                          setConfirmPassword(event.target.value);
+                          setFieldErrors((current) => ({ ...current, confirmPassword: undefined }));
+                        }}
+                      />
+                      <button
+                        type="button"
+                        aria-label={showConfirmPassword ? "Hide confirmation password" : "Show confirmation password"}
+                        aria-pressed={showConfirmPassword}
+                        onClick={() => setShowConfirmPassword((visible) => !visible)}
+                        className="absolute right-3 top-1/2 flex size-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-lg text-muted transition hover:bg-accent/10 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+                      >
+                        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="size-[18px]">
+                          <path d="M2 12c1.2-2.9 4.9-7 10-7s8.8 4.1 10 7c-1.2 2.9-4.9 7-10 7S3.2 14.9 2 12Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+                          <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.7" />
+                        </svg>
+                      </button>
+                    </div>
+                    <p id="confirm-password-hint" className="mt-1.5 text-xs text-muted">Enter the same password again.</p>
+                    {fieldErrors.confirmPassword && <p id="confirm-password-error" className="mt-1 text-sm text-danger">{fieldErrors.confirmPassword}</p>}
+                  </div>
                 )}
               </>
             )}

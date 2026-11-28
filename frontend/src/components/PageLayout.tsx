@@ -15,22 +15,39 @@ export default function PageLayout({ children }: { children: ReactNode }) {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [mode, setMode] = useState<ColorMode>(getSavedMode);
   const [displayName, setDisplayName] = useState("");
+  const [avatarData, setAvatarData] = useState("");
 
   useEffect(() => setSearch(searchParams.get("search") ?? ""), [searchParams]);
 
   useEffect(() => {
     let active = true;
+    const onAvatarUpdated = (event: Event) => {
+      const avatar = (event as CustomEvent<string | null>).detail;
+      setAvatarData(avatar ?? "");
+    };
+    const onProfileUpdated = (event: Event) => {
+      const name = (event as CustomEvent<string>).detail;
+      if (typeof name === "string") setDisplayName(name);
+    };
+    window.addEventListener("cashflow:avatar-updated", onAvatarUpdated);
+    window.addEventListener("cashflow:profile-updated", onProfileUpdated);
     fetch(`${API_URL}/api/v1/users/me`, {
       headers: { Authorization: `Bearer ${getToken()}` },
     })
-      .then((response) => response.ok ? response.json() as Promise<{ email?: string }> : null)
+      .then((response) => response.ok ? response.json() as Promise<{ email?: string; first_name?: string; last_name?: string; avatar_data?: string | null }> : null)
       .then((profile) => {
         if (!active || !profile?.email) return;
+        setAvatarData(profile.avatar_data ?? "");
+        const fullName = [profile.first_name, profile.last_name].filter(Boolean).join(" ").trim();
         const username = profile.email.split("@")[0].split(/[._-]+/).filter(Boolean);
-        setDisplayName(username.map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(" "));
+        setDisplayName(fullName || username.map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(" "));
       })
       .catch(() => undefined);
-    return () => { active = false; };
+    return () => {
+      active = false;
+      window.removeEventListener("cashflow:avatar-updated", onAvatarUpdated);
+      window.removeEventListener("cashflow:profile-updated", onProfileUpdated);
+    };
   }, []);
 
   function logout() {
@@ -118,7 +135,7 @@ export default function PageLayout({ children }: { children: ReactNode }) {
                 <span className={`flex size-7 items-center justify-center rounded-lg ${mode === "dark" ? "bg-accent/15 text-accent" : ""}`}><NavIcon kind="moon" /></span>
               </button>
               <Link to="/profile" aria-label="Open profile" title="Open profile" className="group flex size-10 items-center justify-center overflow-hidden rounded-xl border border-border bg-gradient-to-br from-accent/30 to-primary/30 text-text transition hover:ring-2 hover:ring-accent/40">
-                <span className="flex size-full items-center justify-center bg-background/50"><NavIcon kind="profile" /></span>
+                {avatarData ? <img src={avatarData} alt="" className="size-full object-cover" /> : <span className="flex size-full items-center justify-center bg-background/50"><NavIcon kind="profile" /></span>}
               </Link>
             </div>
           </header>
